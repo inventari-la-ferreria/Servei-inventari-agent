@@ -128,33 +128,26 @@ function Install-Package {
         Expand-Archive -Path $ZipPath -DestinationPath $INSTALL_PATH -Force
         Write-Host "✓ Archivos extraídos en: $INSTALL_PATH" -ForegroundColor Green
         
-        # Verificar archivo de credenciales
+        # Descargar credenciales de Firebase desde el repositorio
         $credPath = Join-Path $DATA_PATH "firebase-credentials.json"
         if (-not (Test-Path $credPath)) {
-            Write-Host "`n⚠ IMPORTANTE: Credenciales de Firebase no encontradas" -ForegroundColor Yellow
-            Write-Host "Necesitas colocar el archivo 'firebase-credentials.json' en:" -ForegroundColor White
-            Write-Host "  $DATA_PATH" -ForegroundColor Cyan
-            Write-Host ""
+            Write-Host "`nDescargando credenciales de Firebase..." -ForegroundColor Yellow
             
-            $continue = Read-Host "¿Tienes el archivo de credenciales? (s/n)"
-            if ($continue -eq 's') {
-                Write-Host "`nPor favor, copia el archivo firebase-credentials.json a:" -ForegroundColor Yellow
-                Write-Host "  $DATA_PATH" -ForegroundColor Cyan
-                Write-Host "`nPresiona Enter cuando hayas copiado el archivo..."
-                Read-Host
-                
-                if (-not (Test-Path $credPath)) {
-                    Write-Warning "El archivo de credenciales aún no se encuentra. El servicio no podrá conectarse a Firebase."
-                    Write-Host "Puedes copiarlo más tarde y reiniciar el servicio." -ForegroundColor Yellow
-                }
+            $credUrl = "https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/main/firebase-credentials.json"
+            
+            try {
+                Invoke-WebRequest -Uri $credUrl -OutFile $credPath -UseBasicParsing
+                Write-Host "✓ Credenciales de Firebase descargadas" -ForegroundColor Green
             }
-            else {
-                Write-Warning "El servicio se instalará pero no funcionará sin las credenciales."
-                Write-Host "Recuerda copiar el archivo más tarde y reiniciar el servicio." -ForegroundColor Yellow
+            catch {
+                Write-Warning "No se pudieron descargar las credenciales automáticamente"
+                Write-Host "Error: $_" -ForegroundColor Red
+                Write-Host "El servicio se instalará pero no funcionará sin las credenciales." -ForegroundColor Yellow
+                Write-Host "Copia manualmente el archivo a: $DATA_PATH" -ForegroundColor Yellow
             }
         }
         else {
-            Write-Host "✓ Credenciales de Firebase encontradas" -ForegroundColor Green
+            Write-Host "✓ Credenciales de Firebase ya existen" -ForegroundColor Green
         }
         
         return $true
