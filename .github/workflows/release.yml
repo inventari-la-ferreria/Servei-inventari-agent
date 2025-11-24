@@ -1,0 +1,105 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - 'v*.*.*'  # Triggers on tags like v1.0.0, v1.2.3, etc.
+  workflow_dispatch:  # Permite ejecutar manualmente el workflow
+    inputs:
+      version:
+        description: 'Version number (e.g., 1.0.1)'
+        required: true
+        type: string
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+    
+    - name: Determine version
+      id: version
+      shell: pwsh
+      run: |
+        if ("${{ github.event_name }}" -eq "workflow_dispatch") {
+          $version = "${{ github.event.inputs.version }}"
+        } else {
+          $version = "${{ github.ref_name }}".TrimStart('v')
+        }
+        echo "VERSION=$version" >> $env:GITHUB_OUTPUT
+        echo "Building version: $version"
+    
+    - name: Restore dependencies
+      run: dotnet restore InventariAgentSvc/InventariAgentSvc/InventariAgentSvc.csproj
+    
+    - name: Build
+      run: dotnet build InventariAgentSvc/InventariAgentSvc/InventariAgentSvc.csproj -c Release --no-restore
+    
+    - name: Publish
+      run: dotnet publish InventariAgentSvc/InventariAgentSvc/InventariAgentSvc.csproj -c Release -o ./publish --no-build
+    
+    - name: Create ZIP package
+      shell: pwsh
+      run: |
+        $version = "${{ steps.version.outputs.VERSION }}"
+        $zipName = "InventariAgent_v$version.zip"
+        Compress-Archive -Path ./publish/* -DestinationPath $zipName -CompressionLevel Optimal
+        
+        # Calculate SHA256 hash
+        $hash = (Get-FileHash -Path $zipName -Algorithm SHA256).Hash
+        echo "SHA256: $hash"
+        echo "PACKAGE_HASH=$hash" >> $env:GITHUB_OUTPUT
+        echo "PACKAGE_NAME=$zipName" >> $env:GITHUB_OUTPUT
+        
+        # Save hash to file
+        $hash | Out-File -FilePath "$zipName.sha256" -NoNewline
+      id: package
+    
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ github.event_name == 'workflow_dispatch' && format('v{0}', github.event.inputs.version) || github.ref_name }}
+        name: Release ${{ steps.version.outputs.VERSION }}
+        draft: false
+        prerelease: false
+        files: |
+          ${{ steps.package.outputs.PACKAGE_NAME }}
+          ${{ steps.package.outputs.PACKAGE_NAME }}.sha256
+        body: |
+          ## Inventari Agent Service v${{ steps.version.outputs.VERSION }}
+          
+          ### 📦 Instalación
+          
+          Descarga el archivo ZIP y sigue la guía de actualización remota.
+          
+          ### 🔐 Verificación de Integridad
+          
+          **SHA256:** `${{ steps.package.outputs.PACKAGE_HASH }}`
+          
+          ### 📋 Actualización Remota
+          
+          Para actualizar dispositivos remotamente, agrega este comando en Firestore:
+          
+          ```json
+          {
+            "updateCommand": {
+              "version": "${{ steps.version.outputs.VERSION }}",
+              "downloadUrl": "https://github.com/inventari-la-ferreria/Servei-inventari-agent/releases/download/v${{ steps.version.outputs.VERSION }}/InventariAgent_v${{ steps.version.outputs.VERSION }}.zip"
+            }
+          }
+          ```
+          
+          ### 📝 Changelog
+          
+          - Cambios incluidos en esta versión
+          - Correcciones de bugs
+          - Nuevas funcionalidades
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
