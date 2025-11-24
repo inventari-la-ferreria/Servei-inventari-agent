@@ -22,6 +22,53 @@ Write-Host "  INSTALADOR INVENTARI AGENT SERVICE" -ForegroundColor Cyan
 Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
+# Función para verificar e instalar .NET Runtime
+function Install-DotNetRuntime {
+    try {
+        Write-Host "Verificando .NET 8.0 Runtime..." -ForegroundColor Yellow
+        
+        # Verificar si .NET 8.0 está instalado
+        $dotnetVersion = & dotnet --list-runtimes 2>$null | Select-String "Microsoft.NETCore.App 8.0"
+        
+        if ($dotnetVersion) {
+            Write-Host "✓ .NET 8.0 Runtime ya está instalado" -ForegroundColor Green
+            return $true
+        }
+        
+        Write-Host ".NET 8.0 Runtime no encontrado. Instalando..." -ForegroundColor Yellow
+        
+        # Descargar el instalador de .NET 8.0 Runtime
+        $dotnetUrl = "https://download.visualstudio.microsoft.com/download/pr/6224f00f-08da-4e7f-85b1-00d42c2bb3d3/b775de636b91e023574a0bbc291f705a/dotnet-runtime-8.0.11-win-x64.exe"
+        $installerPath = Join-Path $env:TEMP "dotnet-runtime-8.0-installer.exe"
+        
+        Write-Host "Descargando .NET 8.0 Runtime..." -ForegroundColor Yellow
+        $ProgressPreference = 'SilentlyContinue'
+        Invoke-WebRequest -Uri $dotnetUrl -OutFile $installerPath -UseBasicParsing
+        $ProgressPreference = 'Continue'
+        
+        Write-Host "Instalando .NET 8.0 Runtime (esto puede tardar un minuto)..." -ForegroundColor Yellow
+        $process = Start-Process -FilePath $installerPath -ArgumentList "/install", "/quiet", "/norestart" -Wait -PassThru
+        
+        if ($process.ExitCode -eq 0 -or $process.ExitCode -eq 3010) {
+            Write-Host "✓ .NET 8.0 Runtime instalado correctamente" -ForegroundColor Green
+            
+            # Limpiar instalador
+            Remove-Item $installerPath -Force -ErrorAction SilentlyContinue
+            return $true
+        }
+        else {
+            Write-Warning "La instalación de .NET Runtime terminó con código: $($process.ExitCode)"
+            Write-Host "Intentando continuar de todos modos..." -ForegroundColor Yellow
+            return $false
+        }
+    }
+    catch {
+        Write-Warning "Error instalando .NET Runtime: $_"
+        Write-Host "El servicio puede no funcionar sin .NET 8.0 Runtime" -ForegroundColor Yellow
+        return $false
+    }
+}
+
 # Función para obtener la última versión desde GitHub
 function Get-LatestRelease {
     try {
@@ -276,10 +323,13 @@ function Start-AgentService {
 # ============================================
 
 try {
-    # 1. Obtener última versión
+    # 1. Instalar .NET Runtime si no está presente
+    Install-DotNetRuntime
+    
+    # 2. Obtener última versión
     $release = Get-LatestRelease
     
-    # 2. Verificar si hay servicio existente
+    # 3. Verificar si hay servicio existente
     $isUpdate = Stop-ExistingService
     
     if ($isUpdate) {
@@ -289,10 +339,10 @@ try {
         Write-Host "`nEsto es una INSTALACIÓN NUEVA del servicio" -ForegroundColor Cyan
     }
     
-    # 3. Descargar paquete
+    # 4. Descargar paquete
     $zipPath = Download-Package -Url $release.DownloadUrl -Version $release.Version
     
-    # 4. Instalar archivos
+    # 5. Instalar archivos
     $installed = Install-Package -ZipPath $zipPath -Version $release.Version
     
     if (-not $installed) {
@@ -300,7 +350,7 @@ try {
         Exit 1
     }
     
-    # 5. Instalar/actualizar servicio de Windows
+    # 6. Instalar/actualizar servicio de Windows
     $serviceInstalled = Install-WindowsService -IsUpdate $isUpdate
     
     if (-not $serviceInstalled) {
@@ -308,7 +358,7 @@ try {
         Exit 1
     }
     
-    # 6. Configurar dispositivo (solo en instalación nueva)
+    # 7. Configurar dispositivo (solo en instalación nueva)
     if (-not $isUpdate) {
         $configured = Configure-Device
         
@@ -320,10 +370,10 @@ try {
         }
     }
     
-    # 7. Iniciar servicio
+    # 8. Iniciar servicio
     $started = Start-AgentService
     
-    # 8. Limpiar archivos temporales
+    # 9. Limpiar archivos temporales
     Write-Host "`nLimpiando archivos temporales..." -ForegroundColor Yellow
     Remove-Item $zipPath -Force -ErrorAction SilentlyContinue
     
