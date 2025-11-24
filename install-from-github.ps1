@@ -175,22 +175,55 @@ function Install-Package {
         Expand-Archive -Path $ZipPath -DestinationPath $INSTALL_PATH -Force
         Write-Host "✓ Archivos extraídos en: $INSTALL_PATH" -ForegroundColor Green
         
-        # Descargar credenciales de Firebase desde el repositorio
+        # Configurar credenciales de Firebase
         $credPath = Join-Path $DATA_PATH "firebase-credentials.json"
         if (-not (Test-Path $credPath)) {
-            Write-Host "`nDescargando credenciales de Firebase..." -ForegroundColor Yellow
+            Write-Host "`n========================================" -ForegroundColor Yellow
+            Write-Host "  CREDENCIALES DE FIREBASE REQUERIDAS" -ForegroundColor Yellow
+            Write-Host "========================================" -ForegroundColor Yellow
+            Write-Host ""
+            Write-Host "El archivo de credenciales no está presente." -ForegroundColor White
+            Write-Host "Opciones:" -ForegroundColor Cyan
+            Write-Host ""
+            Write-Host "  1. Copiar desde disco local" -ForegroundColor White
+            Write-Host "  2. Descargar desde URL personalizada" -ForegroundColor White
+            Write-Host "  3. Saltar (instalar sin credenciales)" -ForegroundColor White
+            Write-Host ""
             
-            $credUrl = "https://raw.githubusercontent.com/$REPO_OWNER/$REPO_NAME/main/firebase-credentials.json"
+            $choice = Read-Host "Selecciona una opción (1-3)"
             
-            try {
-                Invoke-WebRequest -Uri $credUrl -OutFile $credPath -UseBasicParsing
-                Write-Host "✓ Credenciales de Firebase descargadas" -ForegroundColor Green
-            }
-            catch {
-                Write-Warning "No se pudieron descargar las credenciales automáticamente"
-                Write-Host "Error: $_" -ForegroundColor Red
-                Write-Host "El servicio se instalará pero no funcionará sin las credenciales." -ForegroundColor Yellow
-                Write-Host "Copia manualmente el archivo a: $DATA_PATH" -ForegroundColor Yellow
+            switch ($choice) {
+                "1" {
+                    $sourcePath = Read-Host "Ruta completa al archivo firebase-credentials.json"
+                    if (Test-Path $sourcePath) {
+                        Copy-Item -Path $sourcePath -Destination $credPath -Force
+                        Write-Host "✓ Credenciales copiadas correctamente" -ForegroundColor Green
+                    }
+                    else {
+                        Write-Warning "Archivo no encontrado: $sourcePath"
+                        Write-Host "El servicio se instalará pero no funcionará sin las credenciales." -ForegroundColor Yellow
+                    }
+                }
+                "2" {
+                    $credUrl = Read-Host "URL del archivo firebase-credentials.json"
+                    try {
+                        Invoke-WebRequest -Uri $credUrl -OutFile $credPath -UseBasicParsing
+                        Write-Host "✓ Credenciales descargadas correctamente" -ForegroundColor Green
+                    }
+                    catch {
+                        Write-Warning "No se pudieron descargar las credenciales"
+                        Write-Host "Error: $_" -ForegroundColor Red
+                        Write-Host "El servicio se instalará pero no funcionará sin las credenciales." -ForegroundColor Yellow
+                    }
+                }
+                "3" {
+                    Write-Warning "Instalación sin credenciales"
+                    Write-Host "Copia manualmente el archivo más tarde a: $credPath" -ForegroundColor Yellow
+                }
+                default {
+                    Write-Warning "Opción no válida. Instalación sin credenciales."
+                    Write-Host "Copia manualmente el archivo más tarde a: $credPath" -ForegroundColor Yellow
+                }
             }
         }
         else {
