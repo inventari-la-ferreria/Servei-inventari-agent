@@ -211,20 +211,39 @@ function Configure-Device {
         Write-Host "`n========================================" -ForegroundColor Cyan
         Write-Host "  CONFIGURACIÓN DEL DISPOSITIVO" -ForegroundColor Cyan
         Write-Host "========================================" -ForegroundColor Cyan
+        Write-Host ""
         
         $exePath = Join-Path $INSTALL_PATH "InventariAgentSvc.exe"
         
-        Write-Host "`nEjecutando configuración inicial..." -ForegroundColor Yellow
+        if (-not (Test-Path $exePath)) {
+            Write-Error "No se encontró el ejecutable: $exePath"
+            return $false
+        }
+        
+        Write-Host "Ejecutando configuración inicial..." -ForegroundColor Yellow
         Write-Host "Se abrirá el menú de selección de dispositivo." -ForegroundColor White
         Write-Host ""
+        Write-Host "IMPORTANTE: Selecciona el ID del PC desde el menú que aparecerá." -ForegroundColor Yellow
+        Write-Host ""
+        Start-Sleep -Seconds 2
         
         # Ejecutar el servicio en modo consola para configuración
-        & $exePath
+        # Usar Start-Process -Wait para esperar a que termine
+        $processInfo = Start-Process -FilePath $exePath -Wait -PassThru -NoNewWindow
         
-        return $true
+        if ($processInfo.ExitCode -eq 0) {
+            Write-Host ""
+            Write-Host "✓ Configuración completada exitosamente" -ForegroundColor Green
+            return $true
+        }
+        else {
+            Write-Warning "El configurador terminó con código: $($processInfo.ExitCode)"
+            return $false
+        }
     }
     catch {
         Write-Warning "Error durante la configuración: $_"
+        Write-Host "Stack trace: $($_.ScriptStackTrace)" -ForegroundColor Gray
         return $false
     }
 }
