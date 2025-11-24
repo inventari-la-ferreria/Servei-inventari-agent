@@ -95,13 +95,18 @@ public class DeviceSetupMenu
 
         foreach (var doc in snapshot)
         {
+            // Usar ContainsField para evitar excepciones si el campo no existe
+            string? tag = doc.ContainsField("tag") ? doc.GetValue<string>("tag") : null;
+            string? location = doc.ContainsField("location") ? doc.GetValue<string>("location") : null;
+            string? status = doc.ContainsField("status") ? doc.GetValue<string>("status") : "desconocido";
+            
             var device = new DeviceInfo
             {
                 Id = doc.Id,
-                Name = doc.GetValue<string>("tag") ?? doc.Id,
-                Location = doc.GetValue<string>("location"),
-                Status = doc.GetValue<string>("status") ?? "desconocido",
-                Tag = doc.GetValue<string>("tag")
+                Name = tag ?? doc.Id,
+                Location = location,
+                Status = status,
+                Tag = tag
             };
             devices.Add(device);
         }
