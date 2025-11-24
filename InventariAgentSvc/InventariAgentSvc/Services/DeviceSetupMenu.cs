@@ -97,13 +97,17 @@ public class DeviceSetupMenu
         {
             // Usar ContainsField para evitar excepciones si el campo no existe
             string? tag = doc.ContainsField("tag") ? doc.GetValue<string>("tag") : null;
+            string? name = doc.ContainsField("name") ? doc.GetValue<string>("name") : null;
             string? location = doc.ContainsField("location") ? doc.GetValue<string>("location") : null;
             string? status = doc.ContainsField("status") ? doc.GetValue<string>("status") : "desconocido";
+            
+            // Prioridad: tag > name > ID
+            string displayName = tag ?? name ?? doc.Id;
             
             var device = new DeviceInfo
             {
                 Id = doc.Id,
-                Name = tag ?? doc.Id,
+                Name = displayName,
                 Location = location,
                 Status = status,
                 Tag = tag
