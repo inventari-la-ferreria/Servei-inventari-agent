@@ -24,6 +24,7 @@ builder.Services.AddSingleton<MetricsCollector>();
 builder.Services.AddSingleton<FirebaseClient>();
 builder.Services.AddSingleton<AppBlocker>();
 builder.Services.AddSingleton<RemoteUpdateService>();
+builder.Services.AddSingleton<GitHubReleaseChecker>();
 builder.Services.AddTransient<DeviceSetupMenu>();
 
 // Primero verificar configuración antes de agregar el servicio

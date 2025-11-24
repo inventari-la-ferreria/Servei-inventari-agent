@@ -17,7 +17,10 @@ public class Worker : BackgroundService
     private readonly ConfigStore _configStore;
     private readonly AppBlocker _appBlocker;
     private readonly RemoteUpdateService _updateService;
+    private readonly GitHubReleaseChecker _releaseChecker;
     private const string SERVICE_VERSION = "1.0.0"; // Actualizar con cada release
+    private DateTime _lastUpdateCheck = DateTime.MinValue;
+    private const int UPDATE_CHECK_INTERVAL_HOURS = 1; // Verificar cada hora
 
     public Worker(
         ILogger<Worker> logger,
@@ -25,7 +28,8 @@ public class Worker : BackgroundService
         FirebaseClient firebaseClient,
         ConfigStore configStore,
         AppBlocker appBlocker,
-        RemoteUpdateService updateService)
+        RemoteUpdateService updateService,
+        GitHubReleaseChecker releaseChecker)
     {
         _logger = logger;
         _metricsCollector = metricsCollector;
@@ -33,6 +37,7 @@ public class Worker : BackgroundService
         _configStore = configStore;
         _appBlocker = appBlocker;
         _updateService = updateService;
+        _releaseChecker = releaseChecker;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -40,6 +45,11 @@ public class Worker : BackgroundService
         try
         {
             _logger.LogInformation("Servicio iniciado para dispositivo: {DeviceId}", _configStore.Config.DeviceId);
+            _logger.LogInformation("Versión actual del servicio: {Version}", SERVICE_VERSION);
+            
+            // Verificar si hay una actualización disponible en GitHub Releases
+            await CheckForUpdatesAsync();
+            
             // Register device metadata in Firestore (one-time at startup)
             try
             {
@@ -61,8 +71,12 @@ public class Worker : BackgroundService
             {
                 try
                 {
-                    // Verificar si hay un comando de actualización pendiente
-                    await CheckForUpdateCommandAsync();
+                    // Verificar actualizaciones periódicamente (cada hora)
+                    if (DateTime.UtcNow - _lastUpdateCheck > TimeSpan.FromHours(UPDATE_CHECK_INTERVAL_HOURS))
+                    {
+                        await CheckForUpdatesAsync();
+                        _lastUpdateCheck = DateTime.UtcNow;
+                    }
 
                     var metrics = await _metricsCollector.CaptureAsync();
 
@@ -317,45 +331,36 @@ public class Worker : BackgroundService
         }
     }
 
-    private async Task CheckForUpdateCommandAsync()
+    private async Task CheckForUpdatesAsync()
     {
         try
         {
-            var updateCommand = await _firebaseClient.GetUpdateCommandAsync(_configStore.Config.DeviceId);
+            var release = await _releaseChecker.CheckForNewVersionAsync(SERVICE_VERSION);
             
-            if (updateCommand != null && updateCommand.ContainsKey("version") && updateCommand.ContainsKey("downloadUrl"))
+            if (release != null)
             {
-                var targetVersion = updateCommand["version"]?.ToString();
-                var downloadUrl = updateCommand["downloadUrl"]?.ToString();
-
-                if (string.IsNullOrEmpty(targetVersion) || string.IsNullOrEmpty(downloadUrl))
-                {
-                    _logger.LogWarning("Comando de actualización con datos incompletos");
-                    return;
-                }
-
-                // Verificar si ya estamos en esa versión
-                if (targetVersion == SERVICE_VERSION)
-                {
-                    _logger.LogInformation("Ya estamos en la versión {Version}, limpiando comando", targetVersion);
-                    await _firebaseClient.ClearUpdateCommandAsync(_configStore.Config.DeviceId);
-                    return;
-                }
-
-                _logger.LogWarning("=== ACTUALIZACIÓN DETECTADA ===");
+                _logger.LogWarning("=== ACTUALIZACIÓN DISPONIBLE ===");
                 _logger.LogWarning("Versión actual: {CurrentVersion}", SERVICE_VERSION);
-                _logger.LogWarning("Versión objetivo: {TargetVersion}", targetVersion);
-                _logger.LogWarning("URL de descarga: {DownloadUrl}", downloadUrl);
+                _logger.LogWarning("Nueva versión: {NewVersion}", release.Version);
+                _logger.LogWarning("Publicada: {PublishedAt}", release.PublishedAt);
+                _logger.LogWarning("URL de descarga: {DownloadUrl}", release.DownloadUrl);
 
-                // Notificar que se inició la actualización
-                await _firebaseClient.SetUpdateStatusAsync(
-                    _configStore.Config.DeviceId, 
-                    "downloading", 
-                    $"Descargando versión {targetVersion}"
-                );
+                // Notificar en Firestore que se detectó actualización
+                try
+                {
+                    await _firebaseClient.SetUpdateStatusAsync(
+                        _configStore.Config.DeviceId, 
+                        "downloading", 
+                        $"Descargando versión {release.Version}"
+                    );
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "No se pudo notificar estado en Firestore");
+                }
 
                 // Ejecutar actualización (esto detendrá el servicio)
-                var success = await _updateService.PerformUpdateAsync(downloadUrl, targetVersion);
+                var success = await _updateService.PerformUpdateAsync(release.DownloadUrl, release.Version);
 
                 if (success)
                 {
@@ -364,17 +369,21 @@ public class Worker : BackgroundService
                 }
                 else
                 {
-                    await _firebaseClient.SetUpdateStatusAsync(
-                        _configStore.Config.DeviceId, 
-                        "failed", 
-                        "Error durante la actualización"
-                    );
+                    try
+                    {
+                        await _firebaseClient.SetUpdateStatusAsync(
+                            _configStore.Config.DeviceId, 
+                            "failed", 
+                            "Error durante la actualización"
+                        );
+                    }
+                    catch { /* Ignorar errores de notificación */ }
                 }
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error verificando comando de actualización");
+            _logger.LogError(ex, "Error verificando actualizaciones en GitHub");
         }
     }
 }
