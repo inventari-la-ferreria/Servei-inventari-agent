@@ -18,6 +18,10 @@ builder.Logging.AddSimpleConsole(options =>
     options.TimestampFormat = "[yyyy-MM-dd HH:mm:ss] ";
 });
 
+// Agregar File Logger
+var logPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "InventariAgent", "logs", $"service-{DateTime.Now:yyyyMMdd}.log");
+builder.Logging.AddProvider(new SimpleFileLoggerProvider(logPath));
+
 // Registrar servicios
 builder.Services.AddSingleton<ConfigStore>();
 builder.Services.AddSingleton<MetricsCollector>();
