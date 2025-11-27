@@ -19,7 +19,7 @@ public class Worker : BackgroundService
     private readonly AppBlocker _appBlocker;
     private readonly RemoteUpdateService _updateService;
     private readonly GitHubReleaseChecker _releaseChecker;
-    private const string SERVICE_VERSION = "1.0.11"; // Actualizar con cada release
+    private const string SERVICE_VERSION = "1.0.12"; // Actualizar con cada release
     private DateTime _lastUpdateCheck = DateTime.MinValue;
     private const int UPDATE_CHECK_INTERVAL_HOURS = 1; // Verificar cada hora
 
@@ -47,8 +47,21 @@ public class Worker : BackgroundService
         {
             _logger.LogInformation("Servicio iniciado para dispositivo: {DeviceId}", _configStore.Config.DeviceId);
             _logger.LogInformation("Versión actual del servicio: {Version}", SERVICE_VERSION);
-            _logger.LogInformation("✅ Versión 1.0.11 instalada y funcionando correctamente via auto-update.");
             
+            // Limpiar estado de actualización en Firestore al iniciar
+            try
+            {
+                await _firebaseClient.SetUpdateStatusAsync(
+                    _configStore.Config.DeviceId,
+                    "idle",
+                    $"Servicio iniciado: v{SERVICE_VERSION}"
+                );
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "No se pudo actualizar el estado de versión en Firestore");
+            }
+
             // Verificar si hay una actualización disponible en GitHub Releases
             await CheckForUpdatesAsync();
             
