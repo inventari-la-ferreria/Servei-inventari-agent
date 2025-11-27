@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using InventariAgentSvc.Config;
 using InventariAgentSvc.Services;
 using System.Collections.Generic;
+using System.IO;
 
 namespace InventariAgentSvc;
 
@@ -18,7 +19,7 @@ public class Worker : BackgroundService
     private readonly AppBlocker _appBlocker;
     private readonly RemoteUpdateService _updateService;
     private readonly GitHubReleaseChecker _releaseChecker;
-    private const string SERVICE_VERSION = "1.0.10"; // Actualizar con cada release
+    private const string SERVICE_VERSION = "1.0.11"; // Actualizar con cada release
     private DateTime _lastUpdateCheck = DateTime.MinValue;
     private const int UPDATE_CHECK_INTERVAL_HOURS = 1; // Verificar cada hora
 
@@ -46,6 +47,7 @@ public class Worker : BackgroundService
         {
             _logger.LogInformation("Servicio iniciado para dispositivo: {DeviceId}", _configStore.Config.DeviceId);
             _logger.LogInformation("Versión actual del servicio: {Version}", SERVICE_VERSION);
+            _logger.LogInformation("✅ Versión 1.0.11 instalada y funcionando correctamente via auto-update.");
             
             // Verificar si hay una actualización disponible en GitHub Releases
             await CheckForUpdatesAsync();
