@@ -19,7 +19,8 @@ public class Worker : BackgroundService
     private readonly AppBlocker _appBlocker;
     private readonly RemoteUpdateService _updateService;
     private readonly GitHubReleaseChecker _releaseChecker;
-    private const string SERVICE_VERSION = "1.0.13"; // Actualizar con cada release
+    private readonly IncidentMailSender _mailSender;
+    private const string SERVICE_VERSION = "1.0.14"; // Actualizar con cada release
     private DateTime _lastUpdateCheck = DateTime.MinValue;
     private const int UPDATE_CHECK_INTERVAL_HOURS = 1; // Verificar cada hora
 
@@ -30,7 +31,8 @@ public class Worker : BackgroundService
         ConfigStore configStore,
         AppBlocker appBlocker,
         RemoteUpdateService updateService,
-        GitHubReleaseChecker releaseChecker)
+        GitHubReleaseChecker releaseChecker,
+        IncidentMailSender mailSender)
     {
         _logger = logger;
         _metricsCollector = metricsCollector;
@@ -39,6 +41,7 @@ public class Worker : BackgroundService
         _appBlocker = appBlocker;
         _updateService = updateService;
         _releaseChecker = releaseChecker;
+        _mailSender = mailSender;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -47,7 +50,7 @@ public class Worker : BackgroundService
         {
             _logger.LogInformation("Servicio iniciado para dispositivo: {DeviceId}", _configStore.Config.DeviceId);
             _logger.LogInformation("Versión actual del servicio: {Version}", SERVICE_VERSION);
-            _logger.LogInformation("🧪 Esta es una actualización de prueba (v1.0.13) para verificar el auto-update.");
+            _logger.LogInformation("📧 Versión 1.0.14: Integración de notificaciones por correo activa.");
             
             // Limpiar estado de actualización en Firestore al iniciar
             try
@@ -124,13 +127,16 @@ public class Worker : BackgroundService
                         else
                         {
                             var tags = new List<string>(cpuTempTags) { metricTag };
+                            var desc = $"Temperatura CPU crítica: {metrics.CpuTempC:F1}°C (límite: {_configStore.Config.Thresholds.CpuTempCrit}°C)";
                             await _firebaseClient.OpenIncidentAsync(
                                 deviceId,
                                 "performance",
-                                $"Temperatura CPU crítica: {metrics.CpuTempC:F1}°C (límite: {_configStore.Config.Thresholds.CpuTempCrit}°C)",
+                                desc,
                                 "high",
                                 tags
                             );
+                            // Enviar correo (no bloqueante)
+                            _ = _mailSender.SendIncidentMailAsync(deviceId, "performance", desc, "high");
                         }
                     }
                     else if (metrics.CpuTempC >= _configStore.Config.Thresholds.CpuTempWarn)
@@ -150,13 +156,15 @@ public class Worker : BackgroundService
                         else
                         {
                             var tags = new List<string>(cpuTempTags) { metricTag };
+                            var desc = $"Temperatura CPU alta: {metrics.CpuTempC:F1}°C (límite: {_configStore.Config.Thresholds.CpuTempWarn}°C)";
                             await _firebaseClient.OpenIncidentAsync(
                                 deviceId,
                                 "performance",
-                                $"Temperatura CPU alta: {metrics.CpuTempC:F1}°C (límite: {_configStore.Config.Thresholds.CpuTempWarn}°C)",
+                                desc,
                                 "medium",
                                 tags
                             );
+                            _ = _mailSender.SendIncidentMailAsync(deviceId, "performance", desc, "medium");
                         }
                     }
 
@@ -179,13 +187,15 @@ public class Worker : BackgroundService
                         else
                         {
                             var tags = new List<string>(gpuTempTags) { metricTag };
+                            var desc = $"Temperatura GPU crítica: {metrics.GpuTempC:F1}°C (límite: {_configStore.Config.Thresholds.GpuTempCrit}°C)";
                             await _firebaseClient.OpenIncidentAsync(
                                 deviceId,
                                 "performance",
-                                $"Temperatura GPU crítica: {metrics.GpuTempC:F1}°C (límite: {_configStore.Config.Thresholds.GpuTempCrit}°C)",
+                                desc,
                                 "high",
                                 tags
                             );
+                            _ = _mailSender.SendIncidentMailAsync(deviceId, "performance", desc, "high");
                         }
                     }
                     else if (metrics.GpuTempC >= _configStore.Config.Thresholds.GpuTempWarn)
@@ -205,13 +215,15 @@ public class Worker : BackgroundService
                         else
                         {
                             var tags = new List<string>(gpuTempTags) { metricTag };
+                            var desc = $"Temperatura GPU alta: {metrics.GpuTempC:F1}°C (límite: {_configStore.Config.Thresholds.GpuTempWarn}°C)";
                             await _firebaseClient.OpenIncidentAsync(
                                 deviceId,
                                 "performance",
-                                $"Temperatura GPU alta: {metrics.GpuTempC:F1}°C (límite: {_configStore.Config.Thresholds.GpuTempWarn}°C)",
+                                desc,
                                 "medium",
                                 tags
                             );
+                            _ = _mailSender.SendIncidentMailAsync(deviceId, "performance", desc, "medium");
                         }
                     }
 
@@ -234,13 +246,15 @@ public class Worker : BackgroundService
                         else
                         {
                             var tags = new List<string>(cpuUsageTags) { metricTag };
+                            var desc = $"Uso de CPU crítico: {metrics.CpuUsagePct:F1}% (límite: {_configStore.Config.Thresholds.CpuUsageCrit}%)";
                             await _firebaseClient.OpenIncidentAsync(
                                 deviceId,
                                 "performance",
-                                $"Uso de CPU crítico: {metrics.CpuUsagePct:F1}% (límite: {_configStore.Config.Thresholds.CpuUsageCrit}%)",
+                                desc,
                                 "high",
                                 tags
                             );
+                            _ = _mailSender.SendIncidentMailAsync(deviceId, "performance", desc, "high");
                         }
                     }
                     else if (metrics.CpuUsagePct >= _configStore.Config.Thresholds.CpuUsageWarn)
@@ -260,13 +274,15 @@ public class Worker : BackgroundService
                         else
                         {
                             var tags = new List<string>(cpuUsageTags) { metricTag };
+                            var desc = $"Uso de CPU alto: {metrics.CpuUsagePct:F1}% (límite: {_configStore.Config.Thresholds.CpuUsageWarn}%)";
                             await _firebaseClient.OpenIncidentAsync(
                                 deviceId,
                                 "performance",
-                                $"Uso de CPU alto: {metrics.CpuUsagePct:F1}% (límite: {_configStore.Config.Thresholds.CpuUsageWarn}%)",
+                                desc,
                                 "medium",
                                 tags
                             );
+                            _ = _mailSender.SendIncidentMailAsync(deviceId, "performance", desc, "medium");
                         }
                     }
 
@@ -289,13 +305,15 @@ public class Worker : BackgroundService
                         else
                         {
                             var tags = new List<string>(ramUsageTags) { metricTag };
+                            var desc = $"Uso de RAM crítico: {metrics.RamUsagePct:F1}% (límite: 80%)";
                             await _firebaseClient.OpenIncidentAsync(
                                 deviceId,
                                 "memory",
-                                $"Uso de RAM crítico: {metrics.RamUsagePct:F1}% (límite: 80%)",
+                                desc,
                                 "high",
                                 tags
                             );
+                            _ = _mailSender.SendIncidentMailAsync(deviceId, "memory", desc, "high");
                         }
                     }
 
@@ -318,13 +336,15 @@ public class Worker : BackgroundService
                         else
                         {
                             var tags = new List<string>(diskSpaceTags) { metricTag };
+                            var desc = $"Poco espacio en disco: {metrics.DiskFreePct:F1}% libre (límite: 25%)";
                             await _firebaseClient.OpenIncidentAsync(
                                 deviceId,
                                 "storage",
-                                $"Poco espacio en disco: {metrics.DiskFreePct:F1}% libre (límite: 25%)",
+                                desc,
                                 "medium",
                                 tags
                             );
+                            _ = _mailSender.SendIncidentMailAsync(deviceId, "storage", desc, "medium");
                         }
                     }
                 }

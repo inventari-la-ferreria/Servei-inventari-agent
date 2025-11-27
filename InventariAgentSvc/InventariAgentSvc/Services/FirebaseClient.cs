@@ -351,6 +351,39 @@ public class FirebaseClient
     }
 
     /// <summary>
+    /// Obtiene la lista de correos de todos los usuarios con rol 'admin'
+    /// </summary>
+    public async Task<List<string>> GetAdminEmailsAsync()
+    {
+        try
+        {
+            var usersRef = _db.Collection("users");
+            var query = usersRef.WhereEqualTo("role", "admin");
+            var snapshot = await query.GetSnapshotAsync();
+
+            var emails = new List<string>();
+            foreach (var doc in snapshot.Documents)
+            {
+                if (doc.ContainsField("email"))
+                {
+                    var email = doc.GetValue<string>("email");
+                    if (!string.IsNullOrEmpty(email))
+                    {
+                        emails.Add(email);
+                    }
+                }
+            }
+            
+            return emails;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error obteniendo correos de administradores");
+            return new List<string>();
+        }
+    }
+
+    /// <summary>
     /// Actualiza el estado de la actualización en progreso
     /// </summary>
     public async Task SetUpdateStatusAsync(string deviceId, string status, string message)

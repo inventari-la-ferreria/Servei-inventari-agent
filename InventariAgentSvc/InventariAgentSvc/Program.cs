@@ -25,6 +25,7 @@ builder.Services.AddSingleton<FirebaseClient>();
 builder.Services.AddSingleton<AppBlocker>();
 builder.Services.AddSingleton<RemoteUpdateService>();
 builder.Services.AddSingleton<GitHubReleaseChecker>();
+builder.Services.AddSingleton<IncidentMailSender>();
 builder.Services.AddTransient<DeviceSetupMenu>();
 
 // Detectar si se está ejecutando como servicio de Windows o en modo consola

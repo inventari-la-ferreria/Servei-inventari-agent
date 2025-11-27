@@ -11,9 +11,9 @@
     <RestoreIgnoreFailedSources>true</RestoreIgnoreFailedSources>
     
     <!-- Información del proyecto -->
-    <Version>1.0.13</Version>
-    <AssemblyVersion>1.0.13.0</AssemblyVersion>
-    <FileVersion>1.0.13.0</FileVersion>
+    <Version>1.0.14</Version>
+    <AssemblyVersion>1.0.14.0</AssemblyVersion>
+    <FileVersion>1.0.14.0</FileVersion>
     <Company>La Ferreria</Company>
     <Product>Inventari Agent Service</Product>
     <Description>Servicio de monitoreo y gestión remota de dispositivos para Inventari La Ferreria</Description>
