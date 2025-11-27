@@ -118,54 +118,54 @@ Start-Sleep -Seconds 5  # Esperar a que el servicio termine
 Write-Host ""Deteniendo servicio...""
 # Detener el servicio si aún está corriendo
 $service = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
-if ($service -and $service.Status -eq 'Running') {
+if ($service -and $service.Status -eq 'Running') {{
     Stop-Service -Name $ServiceName -Force
     Start-Sleep -Seconds 5
-}
+}}
 
 # Verificar de nuevo y matar proceso si es necesario
 $proc = Get-Process -Name ""InventariAgentSvc"" -ErrorAction SilentlyContinue
-if ($proc) {
+if ($proc) {{
     Write-Host ""Forzando cierre del proceso...""
     Stop-Process -InputObject $proc -Force
     Start-Sleep -Seconds 2
-}
+}}
 
 # Respaldar ejecutable actual
 $exePath = Join-Path $InstallPath 'InventariAgentSvc.exe'
 $backupPath = Join-Path $InstallPath 'InventariAgentSvc.exe.backup'
-if (Test-Path $exePath) {
+if (Test-Path $exePath) {{
     Copy-Item -Path $exePath -Destination $backupPath -Force
-}
+}}
 
 # Copiar nuevos archivos
-try {
+try {{
     Write-Host ""Copiando archivos...""
     Copy-Item -Path ""$SourcePath\*"" -Destination $InstallPath -Recurse -Force -ErrorAction Stop
     Write-Host ""Archivos actualizados correctamente.""
     
     # Eliminar backup si la copia fue exitosa
-    if (Test-Path $backupPath) {
+    if (Test-Path $backupPath) {{
         Remove-Item -Path $backupPath -Force
-    }
-} catch {
+    }}
+}} catch {{
     Write-Error ""Error copiando archivos: $_""
     # Restaurar backup si falla
-    if (Test-Path $backupPath) {
+    if (Test-Path $backupPath) {{
         Copy-Item -Path $backupPath -Destination $exePath -Force
-    }
+    }}
     Stop-Transcript
     exit 1
-}
+}}
 
 # Iniciar el servicio
-try {
+try {{
     Write-Host ""Reiniciando servicio...""
     Start-Service -Name $ServiceName -ErrorAction Stop
     Write-Host ""Servicio reiniciado exitosamente.""
-} catch {
+}} catch {{
     Write-Error ""Error iniciando el servicio: $_""
-}
+}}
 
 # Limpiar archivos temporales
 Start-Sleep -Seconds 2
