@@ -86,6 +86,17 @@ public sealed class AppBlocker : IDisposable
     {
         var exeLower = exeName.ToLowerInvariant();
 
+        // Detectar TLauncher corriendo bajo Java
+        if (exeLower == "java.exe" || exeLower == "javaw.exe")
+        {
+            if (IsTLauncherProcess(pid))
+            {
+                _logger.LogInformation("Detectado proceso Java ejecutando TLauncher (pid {Pid})", pid);
+                exeName = "TLauncher.exe";
+                exeLower = "tlauncher.exe";
+            }
+        }
+
         if (IsAllowed(exeLower))
         {
             _logger.LogDebug("Aplicaci��n permitida (lista blanca): {Exe}", exeName);
@@ -288,5 +299,28 @@ public sealed class AppBlocker : IDisposable
     {
         _startWatcher.Stop();
         _startWatcher.Dispose();
+    }
+
+    private bool IsTLauncherProcess(int pid)
+    {
+        try
+        {
+            using var searcher = new ManagementObjectSearcher($"SELECT CommandLine FROM Win32_Process WHERE ProcessId = {pid}");
+            using var objects = searcher.Get();
+            foreach (ManagementObject obj in objects)
+            {
+                var cmdLine = obj["CommandLine"]?.ToString();
+                if (!string.IsNullOrEmpty(cmdLine) && 
+                    cmdLine.Contains("TLauncher", StringComparison.OrdinalIgnoreCase))
+                {
+                    return true;
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogDebug(ex, "Error verificando línea de comandos para pid {Pid}", pid);
+        }
+        return false;
     }
 }

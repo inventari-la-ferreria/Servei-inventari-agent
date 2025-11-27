@@ -18,7 +18,7 @@ public class Worker : BackgroundService
     private readonly AppBlocker _appBlocker;
     private readonly RemoteUpdateService _updateService;
     private readonly GitHubReleaseChecker _releaseChecker;
-    private const string SERVICE_VERSION = "1.0.7"; // Actualizar con cada release
+    private const string SERVICE_VERSION = "1.0.8"; // Actualizar con cada release
     private DateTime _lastUpdateCheck = DateTime.MinValue;
     private const int UPDATE_CHECK_INTERVAL_HOURS = 1; // Verificar cada hora
 
