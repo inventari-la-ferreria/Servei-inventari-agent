@@ -118,5 +118,19 @@ builder.Services.AddWindowsService(options =>
 builder.Services.AddHostedService<Worker>();
 
 var host = builder.Build();
-Console.WriteLine("Iniciando servicio de monitoreo...");
-host.Run();
+try
+{
+    Console.WriteLine("Iniciando servicio de monitoreo...");
+    host.Run();
+}
+catch (Exception ex)
+{
+    var errorPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "InventariAgent", "startup_error.txt");
+    try
+    {
+        Directory.CreateDirectory(Path.GetDirectoryName(errorPath));
+        File.WriteAllText(errorPath, $"[{DateTime.Now}] FATAL ERROR AL INICIAR:\n{ex}");
+    }
+    catch { /* Nada que hacer si falla el log de error */ }
+    throw; // Re-lanzar para que Windows sepa que falló
+}
