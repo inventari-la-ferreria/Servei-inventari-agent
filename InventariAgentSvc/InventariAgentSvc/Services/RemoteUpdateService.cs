@@ -21,7 +21,9 @@ public class RemoteUpdateService
         _httpClient.Timeout = TimeSpan.FromMinutes(10); // Timeout largo para descargas grandes
         
         _installPath = AppDomain.CurrentDomain.BaseDirectory;
-        _updateScriptPath = Path.Combine(_installPath, "auto-update.ps1");
+        // Usar ProgramData para descargas y logs de actualización, accesible por SYSTEM
+        var programData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "InventariAgent");
+        _updateScriptPath = Path.Combine(programData, "auto-update.ps1");
     }
 
     /// <summary>
@@ -33,10 +35,10 @@ public class RemoteUpdateService
         {
             _logger.LogInformation("Descargando actualización desde: {Url}", downloadUrl);
 
-            var tempDir = Path.Combine(Path.GetTempPath(), "InventariAgent_Update");
-            Directory.CreateDirectory(tempDir);
+            var programData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "InventariAgent", "Updates");
+            Directory.CreateDirectory(programData);
 
-            var zipPath = Path.Combine(tempDir, $"update_{version}.zip");
+            var zipPath = Path.Combine(programData, $"update_{version}.zip");
 
             using (var response = await _httpClient.GetAsync(downloadUrl, HttpCompletionOption.ResponseHeadersRead))
             {
@@ -65,7 +67,8 @@ public class RemoteUpdateService
     {
         try
         {
-            var extractDir = Path.Combine(Path.GetTempPath(), "InventariAgent_Extracted", Guid.NewGuid().ToString());
+            var programData = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "InventariAgent", "Updates");
+            var extractDir = Path.Combine(programData, "Extracted", Guid.NewGuid().ToString());
             Directory.CreateDirectory(extractDir);
 
             _logger.LogInformation("Extrayendo actualización a: {ExtractDir}", extractDir);
@@ -103,55 +106,73 @@ param(
     [string]$ServiceName = 'InventariAgent'
 )
 
+$logFile = Join-Path $env:ProgramData 'InventariAgent\update.log'
+Start-Transcript -Path $logFile -Append
+
+Write-Host ""Iniciando proceso de actualización...""
+Write-Host ""Source: $SourcePath""
+Write-Host ""Dest: $InstallPath""
+
 Start-Sleep -Seconds 5  # Esperar a que el servicio termine
 
-Write-Host ""Aplicando actualización...""
-
+Write-Host ""Deteniendo servicio...""
 # Detener el servicio si aún está corriendo
 $service = Get-Service -Name $ServiceName -ErrorAction SilentlyContinue
-if ($service -and $service.Status -eq 'Running') {{
+if ($service -and $service.Status -eq 'Running') {
     Stop-Service -Name $ServiceName -Force
-    Start-Sleep -Seconds 3
-}}
+    Start-Sleep -Seconds 5
+}
+
+# Verificar de nuevo y matar proceso si es necesario
+$proc = Get-Process -Name ""InventariAgentSvc"" -ErrorAction SilentlyContinue
+if ($proc) {
+    Write-Host ""Forzando cierre del proceso...""
+    Stop-Process -InputObject $proc -Force
+    Start-Sleep -Seconds 2
+}
 
 # Respaldar ejecutable actual
 $exePath = Join-Path $InstallPath 'InventariAgentSvc.exe'
 $backupPath = Join-Path $InstallPath 'InventariAgentSvc.exe.backup'
-if (Test-Path $exePath) {{
+if (Test-Path $exePath) {
     Copy-Item -Path $exePath -Destination $backupPath -Force
-}}
+}
 
 # Copiar nuevos archivos
-try {{
+try {
+    Write-Host ""Copiando archivos...""
     Copy-Item -Path ""$SourcePath\*"" -Destination $InstallPath -Recurse -Force -ErrorAction Stop
     Write-Host ""Archivos actualizados correctamente.""
     
     # Eliminar backup si la copia fue exitosa
-    if (Test-Path $backupPath) {{
+    if (Test-Path $backupPath) {
         Remove-Item -Path $backupPath -Force
-    }}
-}} catch {{
+    }
+} catch {
     Write-Error ""Error copiando archivos: $_""
     # Restaurar backup si falla
-    if (Test-Path $backupPath) {{
+    if (Test-Path $backupPath) {
         Copy-Item -Path $backupPath -Destination $exePath -Force
-    }}
+    }
+    Stop-Transcript
     exit 1
-}}
+}
 
 # Iniciar el servicio
-try {{
+try {
+    Write-Host ""Reiniciando servicio...""
     Start-Service -Name $ServiceName -ErrorAction Stop
     Write-Host ""Servicio reiniciado exitosamente.""
-}} catch {{
+} catch {
     Write-Error ""Error iniciando el servicio: $_""
-}}
+}
 
 # Limpiar archivos temporales
 Start-Sleep -Seconds 2
 Remove-Item -Path $SourcePath -Recurse -Force -ErrorAction SilentlyContinue
 
 Write-Host ""Actualización completada.""
+Stop-Transcript
 ";
 
             File.WriteAllText(_updateScriptPath, scriptContent);
@@ -162,7 +183,7 @@ Write-Host ""Actualización completada.""
             {
                 FileName = "powershell.exe",
                 Arguments = $"-ExecutionPolicy Bypass -File \"{_updateScriptPath}\"",
-                UseShellExecute = false,
+                UseShellExecute = true, // Importante para que se ejecute independientemente
                 CreateNoWindow = true,
                 WindowStyle = ProcessWindowStyle.Hidden
             };
