@@ -19,7 +19,7 @@ public class Worker : BackgroundService
     private readonly AppBlocker _appBlocker;
     private readonly RemoteUpdateService _updateService;
     private readonly GitHubReleaseChecker _releaseChecker;
-    private const string SERVICE_VERSION = "1.0.12"; // Actualizar con cada release
+    private const string SERVICE_VERSION = "1.0.13"; // Actualizar con cada release
     private DateTime _lastUpdateCheck = DateTime.MinValue;
     private const int UPDATE_CHECK_INTERVAL_HOURS = 1; // Verificar cada hora
 
@@ -47,6 +47,7 @@ public class Worker : BackgroundService
         {
             _logger.LogInformation("Servicio iniciado para dispositivo: {DeviceId}", _configStore.Config.DeviceId);
             _logger.LogInformation("Versión actual del servicio: {Version}", SERVICE_VERSION);
+            _logger.LogInformation("🧪 Esta es una actualización de prueba (v1.0.13) para verificar el auto-update.");
             
             // Limpiar estado de actualización en Firestore al iniciar
             try
