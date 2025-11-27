@@ -171,14 +171,13 @@ public class IncidentMailSender
                 <div class=""label"">Data</div>
                 <div class=""value"">{date}</div>
             </div>
-
-            <div class=""field"">
-                <div class=""label"">Estat</div>
-                <div class=""value"">Oberta (Automàtica)</div>
+            <div class="field">
+                <div class="label">Estat</div>
+                <div class="value">Oberta (Automàtica)</div>
             </div>
 
-            <a href=""https://laferreria-inventari.web.app/admin/incidents"" class=""button"">
-                Veure al Tauler
+            <a href="https://laferreria-inventari.web.app/pcs/{deviceId}" class="button">
+                Veure Equip
             </a>
         </div>
     </div>
