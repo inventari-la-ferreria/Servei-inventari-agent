@@ -177,7 +177,7 @@ public class IncidentMailSender
                 <div class=""value"">Oberta (Automàtica)</div>
             </div>
 
-            <a href=""https://inventari.inslaferreria.com/admin/incidents"" class=""button"">
+            <a href=""https://laferreria-inventari.web.app/admin/incidents"" class=""button"">
                 Veure al Tauler
             </a>
         </div>
