@@ -40,17 +40,25 @@ public class IncidentMailSender
 
     public async Task SendIncidentMailAsync(string deviceId, string category, string description, string priority)
     {
-        if (string.IsNullOrEmpty(_apiKey)) return;
+        if (string.IsNullOrEmpty(_apiKey))
+        {
+            _logger.LogWarning("⚠️ SMTP API Key no configurada. No se enviará correo.");
+            return;
+        }
 
         try
         {
+            _logger.LogInformation("📧 Iniciando proceso de envío de correo para incidencia: {Desc}", description);
+
             // 1. Obtener correos de admins
             var adminEmails = await _firebaseClient.GetAdminEmailsAsync();
             if (adminEmails == null || adminEmails.Count == 0)
             {
-                _logger.LogWarning("No se encontraron administradores para enviar correo de incidencia.");
+                _logger.LogWarning("⚠️ No se encontraron administradores para enviar correo de incidencia.");
                 return;
             }
+            
+            _logger.LogInformation("👥 Encontrados {Count} administradores: {Emails}", adminEmails.Count, string.Join(", ", adminEmails));
 
             // 2. Construir contenido
             var subject = $"🚨 Nova Incidència: {description}";
@@ -64,7 +72,7 @@ public class IncidentMailSender
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error en el proceso de envío de correos de incidencia.");
+            _logger.LogError(ex, "❌ Error CRÍTICO en el proceso de envío de correos de incidencia.");
         }
     }
 
@@ -73,6 +81,7 @@ public class IncidentMailSender
         try
         {
             var url = $"{_baseUrl}{_endpoint}";
+            _logger.LogInformation("📤 Enviando a {Email} vía {Url}...", to, url);
             
             var payload = new
             {
@@ -90,16 +99,16 @@ public class IncidentMailSender
             if (!response.IsSuccessStatusCode)
             {
                 var error = await response.Content.ReadAsStringAsync();
-                _logger.LogError("Fallo al enviar correo a {Email}. Status: {Status}. Error: {Error}", to, response.StatusCode, error);
+                _logger.LogError("❌ Fallo al enviar correo a {Email}. Status: {Status}. Error: {Error}", to, response.StatusCode, error);
             }
             else
             {
-                _logger.LogInformation("Correo de incidencia enviado a {Email}", to);
+                _logger.LogInformation("✅ Correo de incidencia enviado correctamente a {Email}", to);
             }
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Excepción enviando correo a {Email}", to);
+            _logger.LogError(ex, "❌ Excepción enviando correo a {Email}", to);
         }
     }
 
