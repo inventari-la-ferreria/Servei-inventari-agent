@@ -69,7 +69,7 @@ public sealed class AppBlocker : IDisposable
         // Barrido inicial
         foreach (var p in Process.GetProcesses())
         {
-            TryBlock(p.ProcessName + ".exe", p.Id);
+            _ = TryBlockAsync(p.ProcessName + ".exe", p.Id);
         }
 
         _startWatcher.Start();
@@ -79,17 +79,33 @@ public sealed class AppBlocker : IDisposable
     {
         var exe = (string)e.NewEvent["ProcessName"];
         var pid = (uint)e.NewEvent["ProcessID"];
-        TryBlock(exe, (int)pid);
+        _ = TryBlockAsync(exe, (int)pid);
     }
 
-    private async void TryBlock(string exeName, int pid)
+    private async Task TryBlockAsync(string exeName, int pid)
     {
         var exeLower = exeName.ToLowerInvariant();
 
-        if (IsAllowed(exeLower)) return;
-        if (!IsBlocked(exeLower, out var appCategory)) return;
+        if (IsAllowed(exeLower))
+        {
+            _logger.LogDebug("Aplicaci��n permitida (lista blanca): {Exe}", exeName);
+            return;
+        }
+        if (!IsBlocked(exeLower, out var appCategory))
+        {
+            _logger.LogDebug("Aplicaci��n no configurada en la lista de bloqueo: {Exe}", exeName);
+            return;
+        }
 
-        var ok = await TerminateProcessAsync(pid);
+        _logger.LogInformation("Detectada aplicaci��n bloqueada: {Exe} (categor��a: {Category}) pid {Pid}", exeName, appCategory, pid);
+        var ok = await TerminateProcessAsync(pid, exeName);
+
+        if (Fb == null)
+        {
+            _logger.LogWarning("FirebaseClient no configurado; no se reportar�� incidente para {Exe}", exeName);
+            return;
+        }
+
         await ReportPolicyIncidentAsync(exeName, pid, appCategory, ok);
     }
 
@@ -105,21 +121,137 @@ public sealed class AppBlocker : IDisposable
         return _blocked.TryGetValue(exeNameLower, out category!);
     }
 
-    private async Task<bool> TerminateProcessAsync(int pid)
+    private async Task<bool> TerminateProcessAsync(int pid, string exeName)
     {
         try
         {
             using var p = Process.GetProcessById(pid);
             if (p.HasExited) return true;
 
-            try { if (p.CloseMainWindow()) await Task.Delay(2000); } catch {}
+            _logger.LogInformation("Intentando cerrar proceso bloqueado {Name} (pid {Pid})", p.ProcessName, pid);
+
+            try
+            {
+                if (p.CloseMainWindow())
+                {
+                    await Task.Delay(2000);
+                    p.Refresh();
+                    if (p.HasExited) return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug(ex, "CloseMainWindow falló para pid {Pid}", pid);
+            }
 
             p.Refresh();
-            if (!p.HasExited) p.Kill(true);
-            return true;
+            if (!p.HasExited)
+            {
+                try
+                {
+                    p.Kill(true);
+                    if (p.WaitForExit(3000)) return true;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogWarning(ex, "Kill falló para pid {Pid}, probando taskkill /F /T", pid);
+                }
+            }
+
+            // Fallback a taskkill /F /T para matar árbol de procesos
+            var taskKilled = await Task.Run(() => TryTaskKill(pid));
+            if (taskKilled) return true;
+
+            // Fallback final: taskkill por nombre de imagen (para casos como TLauncher que resisten por PID)
+            var nameKilled = await Task.Run(() => TryTaskKillByName(exeName));
+            if (nameKilled) return true;
+
+            // Verificar si sigue vivo
+            try
+            {
+                using var check = Process.GetProcessById(pid);
+                if (check.HasExited) return true;
+            }
+            catch
+            {
+                return true; // ya no existe
+            }
+
+            _logger.LogWarning("No se pudo cerrar el proceso pid {Pid}", pid);
+            return false;
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogWarning(ex, "Error intentando finalizar pid {Pid}", pid);
+            return false;
+        }
+    }
+
+    private bool TryTaskKill(int pid)
+    {
+        try
+        {
+            var psi = new ProcessStartInfo
+            {
+                FileName = "taskkill",
+                Arguments = $"/PID {pid} /F /T",
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using var proc = Process.Start(psi)!;
+            proc.WaitForExit(4000);
+            var success = proc.ExitCode == 0;
+            if (!success)
+            {
+                var err = proc.StandardError.ReadToEnd();
+                // Si el error es que no existe (128), consideramos éxito
+                if (proc.ExitCode == 128) return true;
+                
+                _logger.LogWarning("taskkill devolvió {ExitCode} para pid {Pid}. Error: {Err}", proc.ExitCode, pid, err);
+            }
+            return success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "taskkill fallback falló para pid {Pid}", pid);
+            return false;
+        }
+    }
+
+    private bool TryTaskKillByName(string exeName)
+    {
+        try
+        {
+            _logger.LogInformation("Intentando matar proceso por nombre: {Exe}", exeName);
+            var psi = new ProcessStartInfo
+            {
+                FileName = "taskkill",
+                Arguments = $"/IM \"{exeName}\" /F",
+                CreateNoWindow = true,
+                UseShellExecute = false,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true
+            };
+
+            using var proc = Process.Start(psi)!;
+            proc.WaitForExit(4000);
+            
+            // 0 = éxito, 128 = no encontrado (ya muerto)
+            var success = proc.ExitCode == 0 || proc.ExitCode == 128;
+            
+            if (!success)
+            {
+                var err = proc.StandardError.ReadToEnd();
+                _logger.LogWarning("taskkill /IM devolvió {ExitCode} para {Exe}. Error: {Err}", proc.ExitCode, exeName, err);
+            }
+            return success;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "taskkill by name fallback falló para {Exe}", exeName);
             return false;
         }
     }
