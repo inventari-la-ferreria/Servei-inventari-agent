@@ -40,14 +40,15 @@ public class DeviceSetupMenu
                     Console.WriteLine($"El dispositivo actual ({_configStore.Config.DeviceId}) no existe en la base de datos.");
                     Console.WriteLine("Por favor, seleccione un dispositivo válido.\n");
                 }
-                Console.WriteLine("Por favor, introduzca el ID del PC (ejemplo: PC-DEBUG-001)");
-                Console.WriteLine("IDs disponibles:");
+                Console.WriteLine("Por favor, introduzca el TAG del PC (ejemplo: PC-00001) o el ID interno.");
+                Console.WriteLine("Dispositivos disponibles (TAG | ID):");
                 Console.WriteLine();
 
                 foreach (var device in deviceList)
                 {
                     var selected = device.Id == _configStore.Config.DeviceId ? " [SELECCIONADO]" : "";
-                    Console.WriteLine($"- {device.Id}{selected}");
+                    var tagLabel = string.IsNullOrEmpty(device.Tag) ? "(sin TAG)" : device.Tag;
+                    Console.WriteLine($"- {tagLabel} | {device.Id}{selected}");
                 }
 
                 Console.WriteLine("\n0. Salir");
@@ -61,11 +62,13 @@ public class DeviceSetupMenu
                     return false;
                 }
 
-                var selectedDevice = deviceList.FirstOrDefault(d => d.Id.Equals(input, StringComparison.OrdinalIgnoreCase));
-                
+                var selectedDevice = deviceList.FirstOrDefault(d =>
+                    (!string.IsNullOrEmpty(d.Tag) && d.Tag.Equals(input, StringComparison.OrdinalIgnoreCase)) ||
+                    d.Id.Equals(input, StringComparison.OrdinalIgnoreCase));
+                 
                 if (selectedDevice == null)
                 {
-                    Console.WriteLine("ID de PC no encontrado. Presione cualquier tecla para continuar...");
+                    Console.WriteLine("TAG/ID de PC no encontrado. Presione cualquier tecla para continuar...");
                     Console.ReadKey();
                     continue;
                 }
@@ -74,7 +77,7 @@ public class DeviceSetupMenu
                 _configStore.Config.DeviceName = selectedDevice.Name;
                 await _configStore.SaveAsync();
 
-                Console.WriteLine($"\nDispositivo seleccionado: {selectedDevice.Name}");
+                Console.WriteLine($"\nDispositivo seleccionado: {selectedDevice.Name} ({selectedDevice.Id})");
                 Console.WriteLine("Configuración guardada. Iniciando monitoreo...");
                 return true;
             }
