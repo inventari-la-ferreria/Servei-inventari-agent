@@ -1,0 +1,861 @@
+{
+  "blocked": [
+    {
+      "name": "steam.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "steamservice.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "steamwebhelper.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "EpicGamesLauncher.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "Origin.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "EADesktop.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "EAApp.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "Battle.net.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "Battle.net-Helper.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "UbisoftConnect.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "uPlayBrowser.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "GalaxyClient.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "RockstarGamesLauncher.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "RockstarService.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "RiotClientServices.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "RiotClientCrashHandler.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "itch.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "GameJoltClient.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "BethesdaNetLauncher.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "ParadoxLauncher.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "GlyphClientApp.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "AmazonGames.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "Amazon Games.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "GOG Galaxy.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "RobloxPlayerBeta.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "RobloxPlayer.exe",
+      "category": "juego"
+    },
+    {
+      "name": "RobloxStudioBeta.exe",
+      "category": "juego"
+    },
+    {
+      "name": "MinecraftLauncher.exe",
+      "category": "cliente_minecraft"
+    },
+    {
+      "name": "Minecraft.Windows.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Badlion Client.exe",
+      "category": "cliente_minecraft"
+    },
+    {
+      "name": "LunarClient.exe",
+      "category": "cliente_minecraft"
+    },
+    {
+      "name": "TLauncher.exe",
+      "category": "cliente_minecraft"
+    },
+    {
+      "name": "PrismLauncher.exe",
+      "category": "cliente_minecraft"
+    },
+    {
+      "name": "MultiMC.exe",
+      "category": "cliente_minecraft"
+    },
+    {
+      "name": "ATLauncher.exe",
+      "category": "cliente_minecraft"
+    },
+    {
+      "name": "GDLauncher.exe",
+      "category": "cliente_minecraft"
+    },
+    {
+      "name": "CurseForge.exe",
+      "category": "cliente_minecraft"
+    },
+    {
+      "name": "TechnicLauncher.exe",
+      "category": "cliente_minecraft"
+    },
+    {
+      "name": "VALORANT-Win64-Shipping.exe",
+      "category": "juego_competitivo"
+    },
+    {
+      "name": "valorant.exe",
+      "category": "juego_competitivo"
+    },
+    {
+      "name": "LeagueClient.exe",
+      "category": "juego_moba"
+    },
+    {
+      "name": "LeagueClientUx.exe",
+      "category": "juego_moba"
+    },
+    {
+      "name": "League of Legends.exe",
+      "category": "juego_moba"
+    },
+    {
+      "name": "FortniteClient-Win64-Shipping.exe",
+      "category": "juego_battle_royale"
+    },
+    {
+      "name": "FortniteLauncher.exe",
+      "category": "juego_battle_royale"
+    },
+    {
+      "name": "cs2.exe",
+      "category": "juego_competitivo"
+    },
+    {
+      "name": "csgo.exe",
+      "category": "juego_competitivo"
+    },
+    {
+      "name": "hl.exe",
+      "category": "juego"
+    },
+    {
+      "name": "hl2.exe",
+      "category": "juego"
+    },
+    {
+      "name": "portal2.exe",
+      "category": "juego"
+    },
+    {
+      "name": "dota2.exe",
+      "category": "juego"
+    },
+    {
+      "name": "r5apex.exe",
+      "category": "juego_competitivo"
+    },
+    {
+      "name": "ApexLegends.exe",
+      "category": "juego_competitivo"
+    },
+    {
+      "name": "TslGame.exe",
+      "category": "juego_battle_royale"
+    },
+    {
+      "name": "PUBGLite.exe",
+      "category": "juego_battle_royale"
+    },
+    {
+      "name": "Overwatch.exe",
+      "category": "juego_competitivo"
+    },
+    {
+      "name": "OverwatchLauncher.exe",
+      "category": "juego_competitivo"
+    },
+    {
+      "name": "RocketLeague.exe",
+      "category": "juego"
+    },
+    {
+      "name": "GenshinImpact.exe",
+      "category": "juego"
+    },
+    {
+      "name": "YuanShen.exe",
+      "category": "juego"
+    },
+    {
+      "name": "HonkaiStarRail.exe",
+      "category": "juego"
+    },
+    {
+      "name": "HonkaiImpact3.exe",
+      "category": "juego"
+    },
+    {
+      "name": "RainbowSix_Vulkan.exe",
+      "category": "juego_competitivo"
+    },
+    {
+      "name": "Smite.exe",
+      "category": "juego_online"
+    },
+    {
+      "name": "Among Us.exe",
+      "category": "juego"
+    },
+    {
+      "name": "AmongUs.exe",
+      "category": "juego"
+    },
+    {
+      "name": "Terraria.exe",
+      "category": "juego"
+    },
+    {
+      "name": "Stardew Valley.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "UNDERTALE.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "DELTARUNE.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "GeometryDash.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "osu!.exe",
+      "category": "juego_rhythm"
+    },
+    {
+      "name": "osu!.client.exe",
+      "category": "juego_rhythm"
+    },
+    {
+      "name": "Brawlhalla.exe",
+      "category": "juego_online"
+    },
+    {
+      "name": "hollow_knight.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Celeste.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Cuphead.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "ShovelKnight.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "FTLGame.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "IntoTheBreach.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "deadcells.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Hades.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "KatanaZERO.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "HotlineMiami.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "HotlineMiami2.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Fez.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "AxiomVerge.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Bastion.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Transistor.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "VVVVVV.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Limbo.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Inside.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Spelunky.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Spelunky2.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Risk of Rain.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "RiskOfRain2.exe",
+      "category": "juego"
+    },
+    {
+      "name": "Broforce.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "NuclearThrone.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "EnterTheGungeon.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "isaac.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "isaac-ng.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "dontstarve_steam.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "dontstarve_steam_x64.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "OpenTTD.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Teeworlds.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "AssaultCube.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Xonotic.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "OpenSpades.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Warfork.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "SuperTuxKart.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Hedgewars.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "StepMania.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "mugen.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "doukutsu.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "PlantsVsZombies.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Bejeweled3.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Peggle.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "PapersPlease.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "OneShot.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "VampireSurvivors.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Downwell.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "TheEscapists.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "TheEscapists2.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Monaco.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Gunpoint.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Helltaker.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Unturned.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Townscaper.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "Poly Bridge.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "PolyBridge2.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "TmForever.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "SpeedRunners.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "ShellShockLive.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "EuroTruckSimulator2.exe",
+      "category": "juego"
+    },
+    {
+      "name": "ets2.exe",
+      "category": "juego"
+    },
+    {
+      "name": "AmericanTruckSimulator.exe",
+      "category": "juego"
+    },
+    {
+      "name": "CitySkylines.exe",
+      "category": "juego"
+    },
+    {
+      "name": "Cities2.exe",
+      "category": "juego"
+    },
+    {
+      "name": "TheSims4.exe",
+      "category": "juego"
+    },
+    {
+      "name": "The Sims 4.exe",
+      "category": "juego"
+    },
+    {
+      "name": "VALHEIM.exe",
+      "category": "juego"
+    },
+    {
+      "name": "NoMansSky.exe",
+      "category": "juego"
+    },
+    {
+      "name": "RuneLite.exe",
+      "category": "juego_low_spec"
+    },
+    {
+      "name": "jagexlauncher.exe",
+      "category": "launcher_juegos"
+    },
+    {
+      "name": "Dolphin.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "dolphin-emu.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "pcsx2.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "PCSX2.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "retroarch.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "RetroArch.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "citra-qt.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "Citra.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "yuzu.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "suyu.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "ryujinx.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "RPCS3.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "rpcs3.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "PPSSPPWindows64.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "PPSSPP.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "PPSSPPWindows.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "project64.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "Project64.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "mupen64plus-gui.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "snes9x.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "Snes9x.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "zsnesw.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "desmume.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "melonDS.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "ePSXe.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "duckstation.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "redream.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "cemu.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "mednafen.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "nestopia.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "fceux.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "ScummVM.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "dosbox.exe",
+      "category": "emulador_juegos"
+    },
+    {
+      "name": "BlueStacks.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "BluestacksX.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "HD-Player.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "HD-RunApp.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "BstkSVC.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "Nox.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "NoxPlayer.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "NoxVMHandle.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "MEmu.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "MEmuHeadless.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "LdPlayer.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "LDPlayer.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "LdBoxHeadless.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "LdVBoxHeadless.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "AndroidEmulator.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "AndroidEmulatorEn.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "AppMarket.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "GameLoop.exe",
+      "category": "android_emulador"
+    },
+    {
+      "name": "Kodi.exe",
+      "category": "multimedia"
+    },
+    {
+      "name": "Plex.exe",
+      "category": "multimedia"
+    },
+    {
+      "name": "Plex Media Player.exe",
+      "category": "multimedia"
+    },
+    {
+      "name": "TikTok.exe",
+      "category": "social"
+    },
+    {
+      "name": "TikTokLite.exe",
+      "category": "social"
+    },
+    {
+      "name": "JDownloader2.exe",
+      "category": "descargas"
+    },
+    {
+      "name": "JDownloader.exe",
+      "category": "descargas"
+    },
+    {
+      "name": "Internet Download Manager.exe",
+      "category": "descargas"
+    },
+    {
+      "name": "IDMan.exe",
+      "category": "descargas"
+    },
+    {
+      "name": "DWAgent.exe",
+      "category": "remote_desktop_alumno"
+    },
+    {
+      "name": "ChromeRemoteDesktopHost.exe",
+      "category": "remote_desktop_alumno"
+    },
+    {
+      "name": "RustDeskService.exe",
+      "category": "remote_desktop_alumno"
+    }
+  ],
+  "explicitly_allowed": [
+    {
+      "name": "chrome.exe",
+      "category": "navegador_autorizado"
+    },
+    {
+      "name": "firefox.exe",
+      "category": "navegador_autorizado"
+    },
+    {
+      "name": "msedgewebview2.exe",
+      "category": "excepcion_sistema"
+    }
+  ],
+  "allowed_tools_clase": [
+    "wireshark.exe",
+    "putty.exe",
+    "vmware.exe",
+    "vmplayer.exe",
+    "virtualbox.exe",
+    "vboxmanage.exe",
+    "vboxheadless.exe",
+    "packettracer.exe",
+    "visualstudio.exe",
+    "code.exe",
+    "notepad++.exe",
+    "powershell.exe",
+    "cmd.exe"
+  ]
+}

@@ -46,7 +46,13 @@ public sealed class AppBlocker : IDisposable
         try
         {
             var json = File.ReadAllText(path);
-            var policy = JsonSerializer.Deserialize<AppBlockPolicy>(json)!;
+            var options = new JsonSerializerOptions
+            {
+                PropertyNameCaseInsensitive = true,
+                ReadCommentHandling = JsonCommentHandling.Skip,
+                AllowTrailingCommas = true
+            };
+            var policy = JsonSerializer.Deserialize<AppBlockPolicy>(json, options)!;
 
             _blocked = policy.blocked
                 .ToDictionary(e => Path.GetFileName(e.name).ToLowerInvariant(), e => e.category);
@@ -101,12 +107,19 @@ public sealed class AppBlocker : IDisposable
 
         if (IsAllowed(exeLower))
         {
-            _logger.LogDebug("Aplicacin permitida (lista blanca): {Exe}", exeName);
+            _logger.LogDebug("Aplicación permitida (lista blanca): {Exe}", exeName);
             return;
         }
-        if (!IsBlocked(exeLower, out var appCategory))
+
+        // Si es TLauncher detectado por línea de comandos, forzamos el bloqueo
+        // aunque no esté en el JSON (por si falla la carga del archivo).
+        if (exeName == "TLauncher.exe" || exeLower == "tlauncher.exe")
         {
-            _logger.LogDebug("Aplicacin no configurada en la lista de bloqueo: {Exe}", exeName);
+            appCategory = "cliente_minecraft";
+        }
+        else if (!IsBlocked(exeLower, out appCategory))
+        {
+            _logger.LogDebug("Aplicación no configurada en la lista de bloqueo: {Exe}", exeName);
             return;
         }
 
