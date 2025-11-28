@@ -229,12 +229,6 @@ public class FirebaseClient
         }
     }
 
-    public async Task<DocumentSnapshot?> GetOpenIncidentByTagAsync(string deviceId, string metricTag)
-    {
-        try
-        {
-            var query = _db.Collection("pcs").Document(deviceId).Collection("incidents")
-                .WhereEqualTo("status", "open")
                 .WhereArrayContains("tags", metricTag)
                 .OrderByDescending("createdAt")
                 .Limit(1);

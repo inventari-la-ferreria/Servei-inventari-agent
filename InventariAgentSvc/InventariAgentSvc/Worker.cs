@@ -20,10 +20,13 @@ public class Worker : BackgroundService
     private readonly RemoteUpdateService _updateService;
     private readonly GitHubReleaseChecker _releaseChecker;
     private readonly IncidentMailSender _mailSender;
-    private const string SERVICE_VERSION = "1.0.44"; // Actualizar con cada release
+    private readonly HostsBlocker _hostsBlocker;
+    private const string SERVICE_VERSION = "1.0.45"; // Actualizar con cada release
     private DateTime _lastUpdateCheck = DateTime.MinValue;
     private const int UPDATE_CHECK_INTERVAL_HOURS = 1; // Verificar cada hora
     private DateTime _lastHeartbeatTime = DateTime.MinValue;
+    private bool _lastExamModeState = false;
+
     public Worker(
         ILogger<Worker> logger,
         MetricsCollector metricsCollector,
@@ -32,7 +35,8 @@ public class Worker : BackgroundService
         AppBlocker appBlocker,
         RemoteUpdateService updateService,
         GitHubReleaseChecker releaseChecker,
-        IncidentMailSender mailSender)
+        IncidentMailSender mailSender,
+        HostsBlocker hostsBlocker)
     {
         _logger = logger;
         _metricsCollector = metricsCollector;
@@ -42,6 +46,7 @@ public class Worker : BackgroundService
         _updateService = updateService;
         _releaseChecker = releaseChecker;
         _mailSender = mailSender;
+        _hostsBlocker = hostsBlocker;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -50,6 +55,18 @@ public class Worker : BackgroundService
         {
             _logger.LogInformation("Servicio iniciado para dispositivo: {DeviceId}", _configStore.Config.DeviceId);
             _logger.LogInformation("Versión actual del servicio: {Version}", SERVICE_VERSION);
+            
+            // Inicializar estado de ExamMode
+            _lastExamModeState = _configStore.Config.ExamMode;
+            if (_lastExamModeState)
+            {
+                _hostsBlocker.EnableExamMode();
+            }
+            else
+            {
+                // Asegurar que esté desactivado si la config dice false (por si quedó sucio)
+                _hostsBlocker.DisableExamMode();
+            }
             
             // Limpiar estado de actualización en Firestore al iniciar
             try
@@ -85,6 +102,9 @@ public class Worker : BackgroundService
             _appBlocker.LoadPolicy(policyPath);
             _appBlocker.Start();
 
+            // Check inicial de ExamMode remoto (al arrancar)
+            await CheckRemoteExamModeAsync();
+
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
@@ -93,6 +113,8 @@ public class Worker : BackgroundService
                     if (DateTime.UtcNow - _lastUpdateCheck > TimeSpan.FromHours(UPDATE_CHECK_INTERVAL_HOURS))
                     {
                         await CheckForUpdatesAsync();
+                        // Aprovechamos el ciclo de 1 hora para revisar también la config remota (ExamMode)
+                        await CheckRemoteExamModeAsync();
                         _lastUpdateCheck = DateTime.UtcNow;
                     }
 
