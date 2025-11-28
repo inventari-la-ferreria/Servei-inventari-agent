@@ -14,6 +14,16 @@ public class Worker : BackgroundService
 {
     private readonly ILogger<Worker> _logger;
     private readonly MetricsCollector _metricsCollector;
+    private readonly FirebaseClient _firebaseClient;
+    private readonly ConfigStore _configStore;
+    private readonly AppBlocker _appBlocker;
+    private readonly RemoteUpdateService _updateService;
+    private readonly GitHubReleaseChecker _releaseChecker;
+    private readonly IncidentMailSender _mailSender;
+    private const string SERVICE_VERSION = "1.0.27"; // Actualizar con cada release
+    private DateTime _lastUpdateCheck = DateTime.MinValue;
+    private const int UPDATE_CHECK_INTERVAL_HOURS = 1; // Verificar cada hora
+    private DateTime _lastHeartbeatTime = DateTime.MinValue;
     public Worker(
         ILogger<Worker> logger,
         MetricsCollector metricsCollector,
