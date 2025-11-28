@@ -51,8 +51,8 @@ function Install-DotNetRuntime {
         try {
             Write-Host ".NET 8.0 Runtime no encontrado. Instalando..." -ForegroundColor Yellow
             
-            # Descargar el instalador de .NET 8.0 Runtime
-            $dotnetUrl = "https://download.visualstudio.microsoft.com/download/pr/6224f00f-08da-4e7f-85b1-00d42c2bb3d3/b775de636b91e023574a0bbc291f705a/dotnet-runtime-8.0.11-win-x64.exe"
+            # Descargar el instalador de .NET 8.0 Runtime (Link permanente aka.ms)
+            $dotnetUrl = "https://aka.ms/dotnet/8.0/dotnet-runtime-win-x64.exe"
             $installerPath = Join-Path $env:TEMP "dotnet-runtime-8.0-installer.exe"
             
             Write-Host "Descargando .NET 8.0 Runtime..." -ForegroundColor Yellow
