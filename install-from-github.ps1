@@ -179,26 +179,30 @@ function Stop-ExistingService {
 function Install-Package {
     param(
         [string]$ZipPath,
-        [string]$Version
+        [string]$Version,
+        [string]$InstallPath,
+        [string]$DataPath
     )
     
     try {
+        Write-Host "Debug: InstallPath='$InstallPath', DataPath='$DataPath'" -ForegroundColor DarkGray
+
         # Crear directorios
         Write-Host "`nPreparando directorios de instalación..." -ForegroundColor Yellow
-        New-Item -ItemType Directory -Path $INSTALL_PATH -Force | Out-Null
-        New-Item -ItemType Directory -Path $DATA_PATH -Force | Out-Null
+        New-Item -ItemType Directory -Path $InstallPath -Force | Out-Null
+        New-Item -ItemType Directory -Path $DataPath -Force | Out-Null
         
         # Extraer archivos
         Write-Host "Extrayendo archivos..." -ForegroundColor Yellow
-        Expand-Archive -Path $ZipPath -DestinationPath $INSTALL_PATH -Force
-        Write-Host "✓ Archivos extraídos en: $INSTALL_PATH" -ForegroundColor Green
+        Expand-Archive -Path $ZipPath -DestinationPath $InstallPath -Force
+        Write-Host "✓ Archivos extraídos en: $InstallPath" -ForegroundColor Green
         
         # Configurar credenciales de Firebase
-        $credPath = Join-Path $DATA_PATH "firebase-credentials.json"
-        $bundledCreds = Join-Path $INSTALL_PATH "firebase-credentials.json"
+        $credPath = Join-Path $DataPath "firebase-credentials.json"
+        $bundledCreds = Join-Path $InstallPath "firebase-credentials.json"
 
         # Si vienen credenciales encriptadas (credentials.dat), desencriptarlas
-        $bundledEnc = Join-Path $INSTALL_PATH "credentials.dat"
+        $bundledEnc = Join-Path $InstallPath "credentials.dat"
         
         if (Test-Path $bundledEnc) {
             try {
@@ -426,7 +430,7 @@ try {
     $zipPath = Download-Package -Url $release.DownloadUrl -Version $release.Version
     
     # 5. Instalar archivos
-    $installed = Install-Package -ZipPath $zipPath -Version $release.Version
+    $installed = Install-Package -ZipPath $zipPath -Version $release.Version -InstallPath $INSTALL_PATH -DataPath $DATA_PATH
     
     if (-not $installed) {
         Write-Error "La instalación falló"
