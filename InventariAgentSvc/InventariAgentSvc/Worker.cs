@@ -22,7 +22,7 @@ public class Worker : BackgroundService
     private readonly IncidentMailSender _mailSender;
     private readonly HostsBlocker _hostsBlocker;
     private readonly NotificationService _notificationService;
-    private const string SERVICE_VERSION = "1.0.46"; // Actualizar con cada release
+    private const string SERVICE_VERSION = "1.0.47"; // Actualizar con cada release
     private DateTime _lastUpdateCheck = DateTime.MinValue;
     private const int UPDATE_CHECK_INTERVAL_HOURS = 1; // Verificar cada hora
     private DateTime _lastHeartbeatTime = DateTime.MinValue;
@@ -107,6 +107,9 @@ public class Worker : BackgroundService
 
             // Check inicial de ExamMode remoto (al arrancar)
             await CheckRemoteExamModeAsync();
+
+            // Verificar cambios de hardware (Robo)
+            await CheckHardwareChangesAsync();
 
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -446,6 +449,100 @@ public class Worker : BackgroundService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Error sincronizando Modo Examen");
+        }
+    }
+
+    private async Task CheckHardwareChangesAsync()
+    {
+        try
+        {
+            if (!System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows))
+            {
+                return;
+            }
+
+            string currentCpu = "";
+            long currentRam = 0;
+
+            // Obtener CPU
+            using (var searcher = new System.Management.ManagementObjectSearcher("SELECT Name FROM Win32_Processor"))
+            {
+                foreach (var obj in searcher.Get())
+                {
+                    currentCpu = obj["Name"]?.ToString() ?? "Unknown";
+                    break;
+                }
+            }
+
+            // Obtener RAM
+            using (var searcher = new System.Management.ManagementObjectSearcher("SELECT Capacity FROM Win32_PhysicalMemory"))
+            {
+                foreach (var obj in searcher.Get())
+                {
+                    if (long.TryParse(obj["Capacity"]?.ToString(), out long capacity))
+                    {
+                        currentRam += capacity;
+                    }
+                }
+            }
+
+            var stored = _configStore.Config.HardwareSpecs;
+
+            // Si es la primera vez, guardamos la configuración base
+            if (string.IsNullOrEmpty(stored.CpuName) && stored.TotalRamBytes == 0)
+            {
+                _logger.LogInformation("Guardando configuración de hardware base: CPU={Cpu}, RAM={Ram} bytes", currentCpu, currentRam);
+                _configStore.Config.HardwareSpecs.CpuName = currentCpu;
+                _configStore.Config.HardwareSpecs.TotalRamBytes = currentRam;
+                await _configStore.SaveAsync();
+                return;
+            }
+
+            // Verificar cambios (Robo de RAM)
+            // Permitimos un pequeño margen de error por si acaso, pero si falta más de 1GB es sospechoso
+            if (stored.TotalRamBytes > 0 && currentRam < (stored.TotalRamBytes - 1024 * 1024 * 1024))
+            {
+                var msg = $"ALERTA DE SEGURIDAD: Se ha detectado una reducción de memoria RAM. Original: {stored.TotalRamBytes / 1024 / 1024} MB, Actual: {currentRam / 1024 / 1024} MB.";
+                _logger.LogCritical(msg);
+                
+                await _firebaseClient.OpenIncidentAsync(
+                    _configStore.Config.DeviceId,
+                    "security",
+                    msg,
+                    "critical",
+                    new List<string> { "security", "hardware_theft", "ram" }
+                );
+                _ = _mailSender.SendIncidentMailAsync(_configStore.Config.DeviceId, "security", msg, "critical");
+            }
+
+            // Verificar cambio de CPU
+            if (!string.IsNullOrEmpty(stored.CpuName) && currentCpu != stored.CpuName)
+            {
+                var msg = $"ALERTA DE SEGURIDAD: Se ha detectado un cambio de procesador. Original: {stored.CpuName}, Actual: {currentCpu}.";
+                _logger.LogCritical(msg);
+
+                await _firebaseClient.OpenIncidentAsync(
+                    _configStore.Config.DeviceId,
+                    "security",
+                    msg,
+                    "critical",
+                    new List<string> { "security", "hardware_theft", "cpu" }
+                );
+                _ = _mailSender.SendIncidentMailAsync(_configStore.Config.DeviceId, "security", msg, "critical");
+            }
+
+            // Actualizar la config con lo nuevo para no spamear (o podríamos decidir NO actualizar para seguir alertando)
+            // En este caso, actualizamos para asumir el nuevo estado tras la alerta
+            if (currentRam != stored.TotalRamBytes || currentCpu != stored.CpuName)
+            {
+                _configStore.Config.HardwareSpecs.CpuName = currentCpu;
+                _configStore.Config.HardwareSpecs.TotalRamBytes = currentRam;
+                await _configStore.SaveAsync();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error verificando cambios de hardware");
         }
     }
 }
