@@ -289,6 +289,8 @@ public sealed class AppBlocker : IDisposable
         }
     }
 
+    private readonly System.Collections.Concurrent.ConcurrentDictionary<string, DateTime> _lastEmailTime = new();
+
     private async Task ReportPolicyIncidentAsync(string exe, int pid, string appCategory, bool terminated)
     {
         var severity = (appCategory is "launcher_juegos" or "emulador" or "android_emulador") ? "high" : "medium";
@@ -297,6 +299,22 @@ public sealed class AppBlocker : IDisposable
             : $"Intento de bloqueo fallido: {exe} ({appCategory}) — proceso {pid} no pudo cerrarse";
 
         _logger.LogInformation("Buscando incidencia reciente de tipo 'policy' y severidad '{Severity}'", severity);
+        
+        // Debounce local para evitar spam de correos si la app lanza mil procesos (ej. Battle.net)
+        // Si ya enviamos un correo por esta misma app en los últimos 15 minutos, no enviamos otro.
+        var shouldSendEmail = true;
+        var now = DateTime.UtcNow;
+        var key = exe.ToLowerInvariant();
+
+        if (_lastEmailTime.TryGetValue(key, out var lastSent))
+        {
+            if ((now - lastSent).TotalMinutes < 15)
+            {
+                shouldSendEmail = false;
+                _logger.LogInformation("Omitiendo correo para {Exe} (ya enviado hace {Min} min)", exe, (now - lastSent).TotalMinutes);
+            }
+        }
+
         var existing = await Fb.GetRecentOpenIncidentAsync(DeviceId, "policy", severity);
 
         if (existing is null)
@@ -310,18 +328,21 @@ public sealed class AppBlocker : IDisposable
                 new List<string> { "auto","alert","policy","appblock" }
             );
             
-            // Enviar correo de notificación
-            _ = _mailSender.SendIncidentMailAsync(DeviceId, "policy", desc, severity);
+            if (shouldSendEmail)
+            {
+                _lastEmailTime[key] = now;
+                _ = _mailSender.SendIncidentMailAsync(DeviceId, "policy", desc, severity);
+            }
         }
         else
         {
             _logger.LogInformation("Se encontró una incidencia reciente. Añadiendo cambio a la incidencia {IncidentId}", existing.Id);
             await Fb.AppendChangeAsync(existing, "policy.appblock", 0, 0, $"{exe} ({appCategory}) pid={pid} {(terminated ? "terminado" : "fallo")}");
             
-            // Opcional: Enviar correo también en actualizaciones si es crítico, 
-            // pero para no spamear, quizás solo en la creación es suficiente por ahora.
-            // Si el usuario quiere spam, descomentar:
-            // _ = _mailSender.SendIncidentMailAsync(DeviceId, "policy", desc + " (Recurrente)", severity);
+            // Si es una incidencia existente pero ha pasado mucho tiempo desde el último correo,
+            // podríamos querer recordar, pero para evitar spam masivo, mantenemos la lógica de debounce estricta.
+            // Solo enviamos si NO había incidencia reciente (arriba) O si quisiéramos notificar recurrencia (aquí).
+            // De momento, NO enviamos correo en append para no saturar.
         }
     }
 
