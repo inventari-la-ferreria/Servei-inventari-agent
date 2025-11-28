@@ -58,13 +58,16 @@ public class IncidentMailSender
                 return;
             }
             
-            _logger.LogInformation("👥 Encontrados {Count} administradores: {Emails}", adminEmails.Count, string.Join(", ", adminEmails));
+            // 2. Obtener detalles del dispositivo (Tag y Aula)
+            var (deviceTag, deviceLocation) = await _firebaseClient.GetDeviceDetailsAsync(deviceId);
+            
+            _logger.LogInformation("👥 Encontrados {Count} administradores. Enviando para equipo {Tag} en {Location}", adminEmails.Count, deviceTag, deviceLocation);
 
-            // 2. Construir contenido
+            // 3. Construir contenido
             var subject = $"🚨 Nova Incidència: {description}";
-            var htmlContent = GenerateHtmlTemplate(deviceId, category, description, priority);
+            var htmlContent = GenerateHtmlTemplate(deviceId, deviceTag, deviceLocation, category, description, priority);
 
-            // 3. Enviar a cada admin
+            // 4. Enviar a cada admin
             foreach (var email in adminEmails)
             {
                 await SendSingleMailAsync(email, subject, htmlContent);
@@ -112,7 +115,7 @@ public class IncidentMailSender
         }
     }
 
-    private string GenerateHtmlTemplate(string deviceId, string category, string description, string priority)
+    private string GenerateHtmlTemplate(string deviceId, string deviceTag, string deviceLocation, string category, string description, string priority)
     {
         var date = DateTime.Now.ToString("dd/MM/yyyy HH:mm");
         var color = priority.ToLower() switch
@@ -152,7 +155,12 @@ public class IncidentMailSender
             
             <div class=""field"">
                 <div class=""label"">Equip</div>
-                <div class=""value"">{deviceId}</div>
+                <div class=""value"">{deviceTag}</div>
+            </div>
+
+            <div class=""field"">
+                <div class=""label"">Aula</div>
+                <div class=""value"">{deviceLocation}</div>
             </div>
 
             <div class=""field"">

@@ -409,4 +409,25 @@ public class FirebaseClient
             _logger.LogError(ex, "Error estableciendo estado de actualización para {DeviceId}", deviceId);
         }
     }
+    /// <summary>
+    /// Obtiene detalles del dispositivo (tag, location)
+    /// </summary>
+    public async Task<(string Tag, string Location)> GetDeviceDetailsAsync(string deviceId)
+    {
+        try
+        {
+            var doc = await _db.Collection("pcs").Document(deviceId).GetSnapshotAsync();
+            if (doc.Exists)
+            {
+                var tag = doc.ContainsField("tag") ? doc.GetValue<string>("tag") : deviceId;
+                var location = doc.ContainsField("location") ? doc.GetValue<string>("location") : "Desconocida";
+                return (tag, location);
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error obteniendo detalles del dispositivo {DeviceId}", deviceId);
+        }
+        return (deviceId, "Desconocida");
+    }
 }
