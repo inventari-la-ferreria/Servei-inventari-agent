@@ -23,50 +23,65 @@ Write-Host "========================================" -ForegroundColor Cyan
 Write-Host ""
 
 # Función para verificar e instalar .NET Runtime
+# Función para verificar e instalar .NET Runtime
 function Install-DotNetRuntime {
+    $needsInstall = $false
+    
     try {
         Write-Host "Verificando .NET 8.0 Runtime..." -ForegroundColor Yellow
         
-        # Verificar si .NET 8.0 está instalado
-        $dotnetVersion = & dotnet --list-runtimes 2>$null | Select-String "Microsoft.NETCore.App 8.0"
-        
-        if ($dotnetVersion) {
-            Write-Host "✓ .NET 8.0 Runtime ya está instalado" -ForegroundColor Green
-            return $true
+        # Verificar si el comando dotnet existe
+        if (Get-Command "dotnet" -ErrorAction SilentlyContinue) {
+            # Verificar si la versión 8.0 está instalada
+            $dotnetVersion = & dotnet --list-runtimes 2>$null | Select-String "Microsoft.NETCore.App 8.0"
+            if ($dotnetVersion) {
+                Write-Host "✓ .NET 8.0 Runtime ya está instalado" -ForegroundColor Green
+                return $true
+            }
         }
         
-        Write-Host ".NET 8.0 Runtime no encontrado. Instalando..." -ForegroundColor Yellow
-        
-        # Descargar el instalador de .NET 8.0 Runtime
-        $dotnetUrl = "https://download.visualstudio.microsoft.com/download/pr/6224f00f-08da-4e7f-85b1-00d42c2bb3d3/b775de636b91e023574a0bbc291f705a/dotnet-runtime-8.0.11-win-x64.exe"
-        $installerPath = Join-Path $env:TEMP "dotnet-runtime-8.0-installer.exe"
-        
-        Write-Host "Descargando .NET 8.0 Runtime..." -ForegroundColor Yellow
-        $ProgressPreference = 'SilentlyContinue'
-        Invoke-WebRequest -Uri $dotnetUrl -OutFile $installerPath -UseBasicParsing
-        $ProgressPreference = 'Continue'
-        
-        Write-Host "Instalando .NET 8.0 Runtime (esto puede tardar un minuto)..." -ForegroundColor Yellow
-        $process = Start-Process -FilePath $installerPath -ArgumentList "/install", "/quiet", "/norestart" -Wait -PassThru
-        
-        if ($process.ExitCode -eq 0 -or $process.ExitCode -eq 3010) {
-            Write-Host "✓ .NET 8.0 Runtime instalado correctamente" -ForegroundColor Green
+        $needsInstall = $true
+    }
+    catch {
+        # Si falla el chequeo, asumimos que necesitamos instalar
+        $needsInstall = $true
+    }
+
+    if ($needsInstall) {
+        try {
+            Write-Host ".NET 8.0 Runtime no encontrado. Instalando..." -ForegroundColor Yellow
             
-            # Limpiar instalador
-            Remove-Item $installerPath -Force -ErrorAction SilentlyContinue
-            return $true
+            # Descargar el instalador de .NET 8.0 Runtime
+            $dotnetUrl = "https://download.visualstudio.microsoft.com/download/pr/6224f00f-08da-4e7f-85b1-00d42c2bb3d3/b775de636b91e023574a0bbc291f705a/dotnet-runtime-8.0.11-win-x64.exe"
+            $installerPath = Join-Path $env:TEMP "dotnet-runtime-8.0-installer.exe"
+            
+            Write-Host "Descargando .NET 8.0 Runtime..." -ForegroundColor Yellow
+            $ProgressPreference = 'SilentlyContinue'
+            Invoke-WebRequest -Uri $dotnetUrl -OutFile $installerPath -UseBasicParsing
+            $ProgressPreference = 'Continue'
+            
+            Write-Host "Instalando .NET 8.0 Runtime (esto puede tardar un minuto)..." -ForegroundColor Yellow
+            $process = Start-Process -FilePath $installerPath -ArgumentList "/install", "/quiet", "/norestart" -Wait -PassThru
+            
+            if ($process.ExitCode -eq 0 -or $process.ExitCode -eq 3010) {
+                Write-Host "✓ .NET 8.0 Runtime instalado correctamente" -ForegroundColor Green
+                
+                # Limpiar instalador
+                Remove-Item $installerPath -Force -ErrorAction SilentlyContinue
+                return $true
+            }
+            else {
+                Write-Warning "La instalación de .NET Runtime terminó con código: $($process.ExitCode)"
+                return $false
+            }
         }
-        else {
-            Write-Warning "La instalación de .NET Runtime terminó con código: $($process.ExitCode)"
-            Write-Host "Intentando continuar de todos modos..." -ForegroundColor Yellow
+        catch {
+            Write-Error "Error crítico instalando .NET Runtime: $_"
             return $false
         }
     }
-    catch {
-        Write-Warning "Error instalando .NET Runtime: $_"
-        Write-Host "El servicio puede no funcionar sin .NET 8.0 Runtime" -ForegroundColor Yellow
-        return $false
-    }
+    
+    return $true
 }
 
 # Función para obtener la última versión desde GitHub
