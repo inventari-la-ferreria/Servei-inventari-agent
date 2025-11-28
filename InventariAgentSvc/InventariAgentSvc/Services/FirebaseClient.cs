@@ -229,6 +229,29 @@ public class FirebaseClient
         }
     }
 
+    public async Task<bool> GetExamModeAsync(string deviceId)
+    {
+        try
+        {
+            var doc = await _db.Collection("pcs").Document(deviceId).GetSnapshotAsync();
+            if (doc.Exists && doc.ContainsField("examMode"))
+            {
+                return doc.GetValue<bool>("examMode");
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error obteniendo estado de Modo Examen para {DeviceId}", deviceId);
+        }
+        return false;
+    }
+
+    public async Task<DocumentSnapshot?> GetOpenIncidentByTagAsync(string deviceId, string metricTag)
+    {
+        try
+        {
+            var query = _db.Collection("pcs").Document(deviceId).Collection("incidents")
+                .WhereEqualTo("status", "open")
                 .WhereArrayContains("tags", metricTag)
                 .OrderByDescending("createdAt")
                 .Limit(1);
