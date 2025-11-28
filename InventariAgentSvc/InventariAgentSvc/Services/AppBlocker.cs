@@ -20,6 +20,7 @@ public sealed class AppBlocker : IDisposable
 {
     private readonly ILogger<AppBlocker> _logger;
     private readonly ManagementEventWatcher _startWatcher;
+    private readonly IncidentMailSender _mailSender;
     
     private Dictionary<string, string> _blocked = new();
     private HashSet<string> _explicit = new();
@@ -29,10 +30,11 @@ public sealed class AppBlocker : IDisposable
     public string DeviceId { get; set; } = "";
     public ConfigStore Config { get; set; }
 
-    public AppBlocker(ILogger<AppBlocker> logger, ConfigStore configStore)
+    public AppBlocker(ILogger<AppBlocker> logger, ConfigStore configStore, IncidentMailSender mailSender)
     {
         _logger = logger;
         Config = configStore;
+        _mailSender = mailSender;
 
         var q = new WqlEventQuery("SELECT * FROM Win32_ProcessStartTrace");
         _startWatcher = new ManagementEventWatcher(q);
@@ -99,21 +101,21 @@ public sealed class AppBlocker : IDisposable
 
         if (IsAllowed(exeLower))
         {
-            _logger.LogDebug("Aplicaci��n permitida (lista blanca): {Exe}", exeName);
+            _logger.LogDebug("Aplicacin permitida (lista blanca): {Exe}", exeName);
             return;
         }
         if (!IsBlocked(exeLower, out var appCategory))
         {
-            _logger.LogDebug("Aplicaci��n no configurada en la lista de bloqueo: {Exe}", exeName);
+            _logger.LogDebug("Aplicacin no configurada en la lista de bloqueo: {Exe}", exeName);
             return;
         }
 
-        _logger.LogInformation("Detectada aplicaci��n bloqueada: {Exe} (categor��a: {Category}) pid {Pid}", exeName, appCategory, pid);
+        _logger.LogInformation("Detectada aplicacin bloqueada: {Exe} (categora: {Category}) pid {Pid}", exeName, appCategory, pid);
         var ok = await TerminateProcessAsync(pid, exeName);
 
         if (Fb == null)
         {
-            _logger.LogWarning("FirebaseClient no configurado; no se reportar�� incidente para {Exe}", exeName);
+            _logger.LogWarning("FirebaseClient no configurado; no se reportar incidente para {Exe}", exeName);
             return;
         }
 
@@ -287,11 +289,19 @@ public sealed class AppBlocker : IDisposable
                 severity,
                 new List<string> { "auto","alert","policy","appblock" }
             );
+            
+            // Enviar correo de notificación
+            _ = _mailSender.SendIncidentMailAsync(DeviceId, "policy", desc, severity);
         }
         else
         {
             _logger.LogInformation("Se encontró una incidencia reciente. Añadiendo cambio a la incidencia {IncidentId}", existing.Id);
             await Fb.AppendChangeAsync(existing, "policy.appblock", 0, 0, $"{exe} ({appCategory}) pid={pid} {(terminated ? "terminado" : "fallo")}");
+            
+            // Opcional: Enviar correo también en actualizaciones si es crítico, 
+            // pero para no spamear, quizás solo en la creación es suficiente por ahora.
+            // Si el usuario quiere spam, descomentar:
+            // _ = _mailSender.SendIncidentMailAsync(DeviceId, "policy", desc + " (Recurrente)", severity);
         }
     }
 

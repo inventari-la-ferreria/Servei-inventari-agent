@@ -20,7 +20,7 @@ public class Worker : BackgroundService
     private readonly RemoteUpdateService _updateService;
     private readonly GitHubReleaseChecker _releaseChecker;
     private readonly IncidentMailSender _mailSender;
-    private const string SERVICE_VERSION = "1.0.21"; // Actualizar con cada release
+    private const string SERVICE_VERSION = "1.0.22"; // Actualizar con cada release
     private DateTime _lastUpdateCheck = DateTime.MinValue;
     private const int UPDATE_CHECK_INTERVAL_HOURS = 1; // Verificar cada hora
 
@@ -226,64 +226,7 @@ public class Worker : BackgroundService
                         }
                     }
 
-                    // CPU Usage
-                    var cpuUsageTags = new List<string> { "auto", "alert", "cpu", "usage" };
-                    if (metrics.CpuUsagePct >= _configStore.Config.Thresholds.CpuUsageCrit)
-                    {
-                        var metricTag = "cpu_usage_crit";
-                        var open = await _firebaseClient.GetOpenIncidentByTagAsync(deviceId, metricTag);
-                        if (open != null)
-                        {
-                            var last = (open.TryGetValue("updatedAt", out Google.Cloud.Firestore.Timestamp tsUpd)
-                                ? tsUpd.ToDateTime()
-                                : open.GetValue<Google.Cloud.Firestore.Timestamp>("createdAt").ToDateTime());
-                            if (DateTime.UtcNow - last >= TimeSpan.FromMinutes(policy.RepeatUpdateCooldownMinutes))
-                            {
-                                await _firebaseClient.AppendChangeAsync(open.Reference, "cpuUsage", metrics.CpuUsagePct, _configStore.Config.Thresholds.CpuUsageCrit, "Persistente: uso de CPU crítico");
-                            }
-                        }
-                        else
-                        {
-                            var tags = new List<string>(cpuUsageTags) { metricTag };
-                            var desc = $"Uso de CPU crítico: {metrics.CpuUsagePct:F1}% (límite: {_configStore.Config.Thresholds.CpuUsageCrit}%)";
-                            await _firebaseClient.OpenIncidentAsync(
-                                deviceId,
-                                "performance",
-                                desc,
-                                "high",
-                                tags
-                            );
-                            _ = _mailSender.SendIncidentMailAsync(deviceId, "performance", desc, "high");
-                        }
-                    }
-                    else if (metrics.CpuUsagePct >= _configStore.Config.Thresholds.CpuUsageWarn)
-                    {
-                        var metricTag = "cpu_usage_warn";
-                        var open = await _firebaseClient.GetOpenIncidentByTagAsync(deviceId, metricTag);
-                        if (open != null)
-                        {
-                            var last = (open.TryGetValue("updatedAt", out Google.Cloud.Firestore.Timestamp tsUpd)
-                                ? tsUpd.ToDateTime()
-                                : open.GetValue<Google.Cloud.Firestore.Timestamp>("createdAt").ToDateTime());
-                            if (DateTime.UtcNow - last >= TimeSpan.FromMinutes(policy.RepeatUpdateCooldownMinutes))
-                            {
-                                await _firebaseClient.AppendChangeAsync(open.Reference, "cpuUsage", metrics.CpuUsagePct, _configStore.Config.Thresholds.CpuUsageWarn, "Persistente: uso de CPU alto");
-                            }
-                        }
-                        else
-                        {
-                            var tags = new List<string>(cpuUsageTags) { metricTag };
-                            var desc = $"Uso de CPU alto: {metrics.CpuUsagePct:F1}% (límite: {_configStore.Config.Thresholds.CpuUsageWarn}%)";
-                            await _firebaseClient.OpenIncidentAsync(
-                                deviceId,
-                                "performance",
-                                desc,
-                                "medium",
-                                tags
-                            );
-                            _ = _mailSender.SendIncidentMailAsync(deviceId, "performance", desc, "medium");
-                        }
-                    }
+
 
                     // RAM Usage
                     var ramUsageTags = new List<string> { "auto", "alert", "ram", "usage" };
