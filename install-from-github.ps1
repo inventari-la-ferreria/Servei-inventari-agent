@@ -198,7 +198,7 @@ function Install-Package {
         $bundledCreds = Join-Path $INSTALL_PATH "firebase-credentials.json"
 
         # Si vienen credenciales encriptadas (credentials.dat), desencriptarlas
-        $bundledEnc = Join-Path $installPath "credentials.dat"
+        $bundledEnc = Join-Path $INSTALL_PATH "credentials.dat"
         
         if (Test-Path $bundledEnc) {
             try {
