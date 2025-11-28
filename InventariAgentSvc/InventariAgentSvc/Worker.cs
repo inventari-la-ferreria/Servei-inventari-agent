@@ -20,9 +20,11 @@ public class Worker : BackgroundService
     private readonly RemoteUpdateService _updateService;
     private readonly GitHubReleaseChecker _releaseChecker;
     private readonly IncidentMailSender _mailSender;
-    private const string SERVICE_VERSION = "1.0.23"; // Actualizar con cada release
+    private const string SERVICE_VERSION = "1.0.24"; // Actualizar con cada release
     private DateTime _lastUpdateCheck = DateTime.MinValue;
     private const int UPDATE_CHECK_INTERVAL_HOURS = 1; // Verificar cada hora
+
+    private DateTime _lastHeartbeatTime = DateTime.MinValue;
 
     public Worker(
         ILogger<Worker> logger,
@@ -97,11 +99,32 @@ public class Worker : BackgroundService
                     }
 
                     var metrics = await _metricsCollector.CaptureAsync();
+                    var thresholds = _configStore.Config.Thresholds;
 
-                    await _firebaseClient.UpdateDeviceHeartbeatAsync(
-                        _configStore.Config.DeviceId,
-                        metrics
-                    );
+                    // Lógica de Heartbeat optimizada:
+                    // 1. Si se supera algún umbral de advertencia -> Actualizar YA
+                    // 2. Si ha pasado 1 hora desde el último heartbeat -> Actualizar (Keep-alive)
+                    
+                    bool isCritical = 
+                        metrics.CpuTempC >= thresholds.CpuTempWarn ||
+                        metrics.GpuTempC >= thresholds.GpuTempWarn ||
+                        metrics.RamUsagePct >= 80 || // Hardcoded warn threshold for RAM if not in config
+                        metrics.DiskFreePct < 25;    // Hardcoded warn threshold for Disk if not in config
+
+                    bool isKeepAliveDue = DateTime.UtcNow - _lastHeartbeatTime >= TimeSpan.FromHours(1);
+
+                    if (isCritical || isKeepAliveDue)
+                    {
+                        if (isCritical) _logger.LogInformation("⚠️ Métricas fuera de rango, forzando actualización de heartbeat.");
+                        else _logger.LogInformation("⏰ Hora de heartbeat programado (Keep-alive).");
+
+                        await _firebaseClient.UpdateDeviceHeartbeatAsync(
+                            _configStore.Config.DeviceId,
+                            metrics
+                        );
+                        _lastHeartbeatTime = DateTime.UtcNow;
+                    }
+
 
                     // Check for critical metrics and create incidents
                     var deviceId = _configStore.Config.DeviceId;
