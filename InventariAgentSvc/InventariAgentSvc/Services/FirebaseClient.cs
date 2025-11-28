@@ -50,8 +50,22 @@ public class FirebaseClient
             );
         }
 
-        Environment.SetEnvironmentVariable("GOOGLE_APPLICATION_CREDENTIALS", credPath);
-        _db = FirestoreDb.Create(_projectId);
+        // Cargar credenciales explícitamente en lugar de usar variable de entorno
+        try 
+        {
+            var credential = Google.Apis.Auth.OAuth2.GoogleCredential.FromFile(credPath);
+            var builder = new FirestoreDbBuilder
+            {
+                ProjectId = _projectId,
+                Credential = credential
+            };
+            _db = builder.Build();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error inicializando Firestore con las credenciales en: {CredPath}", credPath);
+            throw;
+        }
     }
 
     public async Task UpdateDeviceHeartbeatAsync(string deviceId, MetricsSnapshot metrics)

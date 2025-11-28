@@ -182,7 +182,18 @@ function Install-Package {
         # Si las credenciales venían en el ZIP, moverlas al sitio correcto
         if (Test-Path $bundledCreds) {
             Move-Item -Path $bundledCreds -Destination $credPath -Force
-            Write-Host "✓ Credenciales incluidas en el paquete instaladas correctamente" -ForegroundColor Green
+            
+            # Validar que el JSON no esté vacío y sea válido
+            try {
+                $json = Get-Content $credPath -Raw | ConvertFrom-Json
+                if (-not $json.project_id) { throw "JSON inválido (falta project_id)" }
+                Write-Host "✓ Credenciales instaladas y validadas correctamente" -ForegroundColor Green
+            }
+            catch {
+                Write-Warning "El archivo de credenciales incluido parece inválido o corrupto."
+                Write-Warning "Error: $_"
+                Remove-Item $credPath -Force
+            }
         }
 
         if (-not (Test-Path $credPath)) {
