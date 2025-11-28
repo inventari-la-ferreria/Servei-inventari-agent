@@ -24,11 +24,36 @@ public class HostsBlocker
         "gemini.google.com",
         "bard.google.com",
         "claude.ai", "www.claude.ai",
+        "anthropic.com", "www.anthropic.com",
         "copilot.microsoft.com",
-        "bing.com", "www.bing.com", // Bing Chat is integrated, hard to block only chat without blocking bing
+        "bing.com", "www.bing.com",
         "poe.com", "www.poe.com",
         "perplexity.ai", "www.perplexity.ai",
-        "you.com", "www.you.com"
+        "you.com", "www.you.com",
+        "deepseek.com", "www.deepseek.com", "chat.deepseek.com",
+        "huggingface.co", "www.huggingface.co", "huggingface.co/chat",
+        "pi.ai", "www.pi.ai",
+        "character.ai", "www.character.ai",
+        "quora.com", "www.quora.com",
+        "writesonic.com", "www.writesonic.com",
+        "jasper.ai", "www.jasper.ai",
+        "copy.ai", "www.copy.ai",
+        "rytr.me", "www.rytr.me",
+        "phind.com", "www.phind.com",
+        "mistral.ai", "www.mistral.ai", "chat.mistral.ai",
+        "stability.ai", "www.stability.ai",
+        "midjourney.com", "www.midjourney.com",
+        "leonardo.ai", "www.leonardo.ai",
+        "quillbot.com", "www.quillbot.com",
+        "socratic.org", "www.socratic.org",
+        "brainly.com", "www.brainly.com", "brainly.lat",
+        "chegg.com", "www.chegg.com",
+        "coursehero.com", "www.coursehero.com",
+        "wolframalpha.com", "www.wolframalpha.com",
+        "blackbox.ai", "www.blackbox.ai",
+        "codium.ai", "www.codium.ai",
+        "tabnine.com", "www.tabnine.com",
+        "replit.com", "www.replit.com"
     };
 
     public HostsBlocker(ILogger<HostsBlocker> logger)
