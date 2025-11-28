@@ -407,4 +407,40 @@ public class Worker : BackgroundService
             _logger.LogError(ex, "Error verificando actualizaciones en GitHub");
         }
     }
+    }
+
+    private async Task CheckRemoteExamModeAsync()
+    {
+        try
+        {
+            var remoteExamMode = await _firebaseClient.GetExamModeAsync(_configStore.Config.DeviceId);
+            
+            // Si el estado remoto es diferente al local, actualizamos
+            if (remoteExamMode != _configStore.Config.ExamMode)
+            {
+                _logger.LogInformation("Sincronizando Modo Examen desde remoto: {State}", remoteExamMode);
+                _configStore.Config.ExamMode = remoteExamMode;
+                await _configStore.SaveAsync();
+
+                // Aplicar cambios
+                if (remoteExamMode)
+                {
+                    _hostsBlocker.EnableExamMode();
+                }
+                else
+                {
+                    _hostsBlocker.DisableExamMode();
+                }
+            }
+            // Asegurar consistencia (por si se modificó el hosts manualmente)
+            else if (_configStore.Config.ExamMode)
+            {
+                 _hostsBlocker.EnableExamMode();
+            }
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error sincronizando Modo Examen");
+        }
+    }
 }
