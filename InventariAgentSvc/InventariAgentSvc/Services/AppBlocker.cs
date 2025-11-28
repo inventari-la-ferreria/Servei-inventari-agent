@@ -114,10 +114,15 @@ public sealed class AppBlocker : IDisposable
         string appCategory;
 
         // Si es TLauncher detectado por línea de comandos, forzamos el bloqueo
-        // aunque no esté en el JSON (por si falla la carga del archivo).
         if (exeName == "TLauncher.exe" || exeLower == "tlauncher.exe")
         {
             appCategory = "cliente_minecraft";
+        }
+        // Force block Battle.net
+        else if (exeLower.Contains("battle.net") || exeLower == "battle.net.exe")
+        {
+             _logger.LogInformation("Detectado Battle.net (force block): {Exe}", exeName);
+             appCategory = "launcher_juegos";
         }
         else if (!IsBlocked(exeLower, out appCategory))
         {
@@ -125,12 +130,12 @@ public sealed class AppBlocker : IDisposable
             return;
         }
 
-        _logger.LogInformation("Detectada aplicacin bloqueada: {Exe} (categora: {Category}) pid {Pid}", exeName, appCategory, pid);
+        _logger.LogInformation("Detectada aplicación bloqueada: {Exe} (categoría: {Category}) pid {Pid}", exeName, appCategory, pid);
         var ok = await TerminateProcessAsync(pid, exeName);
 
         if (Fb == null)
         {
-            _logger.LogWarning("FirebaseClient no configurado; no se reportar incidente para {Exe}", exeName);
+            _logger.LogWarning("FirebaseClient no configurado; no se reportará incidente para {Exe}", exeName);
             return;
         }
 
