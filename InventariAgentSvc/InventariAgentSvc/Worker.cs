@@ -407,7 +407,7 @@ public class Worker : BackgroundService
             _logger.LogError(ex, "Error verificando actualizaciones en GitHub");
         }
     }
-    }
+
 
     private async Task CheckRemoteExamModeAsync()
     {
