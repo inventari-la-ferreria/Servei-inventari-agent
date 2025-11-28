@@ -10,6 +10,9 @@ if (-Not ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdenti
 
 $ErrorActionPreference = "Stop"
 
+# Configurar TLS 1.2 (Crucial para descargas desde GitHub y Microsoft)
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+
 # Configuración
 $REPO_OWNER = "inventari-la-ferreria"
 $REPO_NAME = "Servei-inventari-agent"
@@ -51,9 +54,9 @@ function Install-DotNetRuntime {
         try {
             Write-Host ".NET 8.0 Runtime no encontrado. Instalando..." -ForegroundColor Yellow
             
-            # Descargar el instalador de .NET 8.0 Runtime (Link permanente aka.ms)
-            $dotnetUrl = "https://aka.ms/dotnet/8.0/dotnet-runtime-win-x64.exe"
-            $installerPath = Join-Path $env:TEMP "dotnet-runtime-8.0-installer.exe"
+            # Descargar el instalador de .NET 8.0 Desktop Runtime (Más completo y seguro)
+            $dotnetUrl = "https://aka.ms/dotnet/8.0/windowsdesktop-runtime-win-x64.exe"
+            $installerPath = Join-Path $env:TEMP "dotnet-desktop-runtime-8.0-installer.exe"
             
             Write-Host "Descargando .NET 8.0 Runtime..." -ForegroundColor Yellow
             $ProgressPreference = 'SilentlyContinue'
