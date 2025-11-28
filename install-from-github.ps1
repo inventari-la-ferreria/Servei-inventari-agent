@@ -199,48 +199,27 @@ function Install-Package {
         
         # Configurar credenciales de Firebase
         $credPath = Join-Path $DataPath "firebase-credentials.json"
-        $bundledCreds = Join-Path $InstallPath "firebase-credentials.json"
-
-        # Si vienen credenciales encriptadas (credentials.dat), desencriptarlas
-        $bundledEnc = Join-Path $InstallPath "credentials.dat"
         
-        if (Test-Path $bundledEnc) {
+        # URL directa de descarga de Google Drive (ID: 1mXGEbLdBuyeV4ejQ5U2iG2yFyxt1-oi7)
+        $driveUrl = "https://drive.google.com/uc?export=download&id=1mXGEbLdBuyeV4ejQ5U2iG2yFyxt1-oi7"
+
+        if (-not (Test-Path $credPath)) {
             try {
-                Write-Host "Desencriptando credenciales..." -ForegroundColor Cyan
-                $encBytes = [System.IO.File]::ReadAllBytes($bundledEnc)
-                
-                $key = [System.Text.Encoding]::UTF8.GetBytes("InventariAgent_SecureKey_2024_!!")
-                $iv = [System.Text.Encoding]::UTF8.GetBytes("InventariAgentIV")
-
-                $aes = [System.Security.Cryptography.Aes]::Create()
-                $aes.Key = $key
-                $aes.IV = $iv
-                $aes.Mode = [System.Security.Cryptography.CipherMode]::CBC
-                $aes.Padding = [System.Security.Cryptography.PaddingMode]::PKCS7
-
-                $decryptor = $aes.CreateDecryptor()
-                $decryptedBytes = $decryptor.TransformFinalBlock($encBytes, 0, $encBytes.Length)
-                $jsonString = [System.Text.Encoding]::UTF8.GetString($decryptedBytes)
-                
-                # Guardar desencriptado en el destino final
-                $jsonString | Set-Content $credPath -Encoding UTF8
+                Write-Host "Descargando credenciales desde Google Drive..." -ForegroundColor Cyan
+                Invoke-WebRequest -Uri $driveUrl -OutFile $credPath -UseBasicParsing
                 
                 # Validar
-                $json = $jsonString | ConvertFrom-Json
-                if (-not $json.project_id) { throw "JSON inválido tras desencriptar" }
+                $json = Get-Content $credPath -Raw | ConvertFrom-Json
+                if (-not $json.project_id) { throw "JSON inválido descargado de Drive" }
                 
-                Write-Host "✓ Credenciales instaladas y validadas correctamente" -ForegroundColor Green
-                
-                # Borrar archivo encriptado temporal
-                Remove-Item $bundledEnc -Force
+                Write-Host "✓ Credenciales descargadas e instaladas correctamente" -ForegroundColor Green
             }
             catch {
-                Write-Warning "Error desencriptando credenciales: $_"
+                Write-Warning "No se pudieron descargar las credenciales automáticamente."
+                Write-Warning "Error: $_"
                 if (Test-Path $credPath) { Remove-Item $credPath -Force }
             }
         }
-        # Compatibilidad con versiones anteriores (texto plano) - Desactivado para evitar ban
-        # elseif (Test-Path $bundledCreds) { ... }
 
         if (-not (Test-Path $credPath)) {
             Write-Host "`n========================================" -ForegroundColor Yellow

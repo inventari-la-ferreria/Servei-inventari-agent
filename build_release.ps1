@@ -21,6 +21,9 @@ if (Test-Path ".\install-from-github.ps1") {
     Copy-Item ".\install-from-github.ps1" -Destination "$publishDir\install.ps1"
 }
 
+# NOTA: Ya no incluimos credenciales en el ZIP para evitar baneos.
+# El script de instalación las descarga de Google Drive.
+
 # 5. Comprimir
 Write-Host "`n[4/4] Creando ZIP..."
 Compress-Archive -Path "$publishDir\*" -DestinationPath $zipName -Force
