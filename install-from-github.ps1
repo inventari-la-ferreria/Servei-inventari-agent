@@ -281,6 +281,22 @@ function Configure-Device {
             return $false
         }
         
+        # Verificar si ya existe configuración válida
+        $configPath = Join-Path $DATA_PATH "config.json"
+        if (Test-Path $configPath) {
+            try {
+                $jsonContent = Get-Content $configPath -Raw | ConvertFrom-Json
+                if (-not [string]::IsNullOrWhiteSpace($jsonContent.DeviceId)) {
+                    Write-Host "✓ Configuración existente detectada (DeviceId: $($jsonContent.DeviceId))" -ForegroundColor Green
+                    Write-Host "Saltando paso de configuración." -ForegroundColor Gray
+                    return $true
+                }
+            }
+            catch {
+                Write-Warning "No se pudo leer el archivo de configuración existente."
+            }
+        }
+
         Write-Host "Ejecutando configuración inicial..." -ForegroundColor Yellow
         Write-Host "Se abrirá el menú de selección de dispositivo." -ForegroundColor White
         Write-Host ""
@@ -372,16 +388,14 @@ try {
         Exit 1
     }
     
-    # 7. Configurar dispositivo (solo en instalación nueva)
-    if (-not $isUpdate) {
-        $configured = Configure-Device
-        
-        if (-not $configured) {
-            Write-Warning "La configuración no se completó correctamente"
-            Write-Host "Puedes configurar el dispositivo más tarde ejecutando:" -ForegroundColor Yellow
-            Write-Host "  cd '$INSTALL_PATH'" -ForegroundColor Cyan
-            Write-Host "  .\InventariAgentSvc.exe" -ForegroundColor Cyan
-        }
+    # 7. Configurar dispositivo (si es necesario)
+    $configured = Configure-Device
+    
+    if (-not $configured) {
+        Write-Warning "La configuración no se completó correctamente"
+        Write-Host "Puedes configurar el dispositivo más tarde ejecutando:" -ForegroundColor Yellow
+        Write-Host "  cd '$INSTALL_PATH'" -ForegroundColor Cyan
+        Write-Host "  .\InventariAgentSvc.exe" -ForegroundColor Cyan
     }
     
     # 8. Iniciar servicio
