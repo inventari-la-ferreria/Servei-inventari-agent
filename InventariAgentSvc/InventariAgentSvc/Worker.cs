@@ -20,7 +20,7 @@ public class Worker : BackgroundService
     private readonly RemoteUpdateService _updateService;
     private readonly GitHubReleaseChecker _releaseChecker;
     private readonly IncidentMailSender _mailSender;
-    private const string SERVICE_VERSION = "1.0.20"; // Actualizar con cada release
+    private const string SERVICE_VERSION = "1.0.21"; // Actualizar con cada release
     private DateTime _lastUpdateCheck = DateTime.MinValue;
     private const int UPDATE_CHECK_INTERVAL_HOURS = 1; // Verificar cada hora
 
@@ -50,15 +50,6 @@ public class Worker : BackgroundService
         {
             _logger.LogInformation("Servicio iniciado para dispositivo: {DeviceId}", _configStore.Config.DeviceId);
             _logger.LogInformation("Versión actual del servicio: {Version}", SERVICE_VERSION);
-            _logger.LogInformation("🔗 Versión 1.0.20: Link directo a detalle de equipo.");
-
-            // PRUEBA DE CORREO AL INICIO
-            _ = _mailSender.SendIncidentMailAsync(
-                _configStore.Config.DeviceId, 
-                "test", 
-                "Prueba de correo (v1.0.20) - Link PC", 
-                "low"
-            );
             
             // Limpiar estado de actualización en Firestore al iniciar
             try
