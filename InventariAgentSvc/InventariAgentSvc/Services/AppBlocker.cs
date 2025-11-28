@@ -111,6 +111,8 @@ public sealed class AppBlocker : IDisposable
             return;
         }
 
+        string appCategory;
+
         // Si es TLauncher detectado por línea de comandos, forzamos el bloqueo
         // aunque no esté en el JSON (por si falla la carga del archivo).
         if (exeName == "TLauncher.exe" || exeLower == "tlauncher.exe")
